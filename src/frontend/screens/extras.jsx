@@ -132,7 +132,11 @@ function NotificationList({ onBack, onVenue, items: itemsProp }) {
           {I.back(22, "var(--text)")}
         </button>
         <div style={{ flex: 1, fontSize: 17, fontWeight: 700, letterSpacing: "-0.4px" }}>알림</div>
-        <button type="button" style={{ background: "none", border: "none", padding: "8px 12px", fontSize: 13, color: "var(--text-sub)", cursor: "pointer", fontFamily: "inherit" }}>
+        <button type="button" onClick={async () => {
+          // 알림 페이지 진입시 자동 읽음 처리되지만, 명시 호출도 가능
+          await fetch('/notifications', { credentials: 'same-origin' }).catch(()=>{});
+          window.location.reload();
+        }} style={{ background: "none", border: "none", padding: "8px 12px", fontSize: 13, color: "var(--text-sub)", cursor: "pointer", fontFamily: "inherit" }}>
           모두 읽음
         </button>
       </div>
@@ -325,6 +329,29 @@ function EntryGuide({ onBack, reservation }) {
     name: "박지훈",
   };
   const v = r.venue;
+  const venueAddress = r.venueAddress || (v && v.address) || '';
+  const venuePhone   = r.venuePhone   || (v && v.phone)   || '';
+
+  // 카운트다운 (예약 시작 시각까지) — r.startsAt (epoch sec) 또는 r.day + r.time 으로 계산
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => { const id = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(id); }, []);
+  const startsAt = r.startsAt ? new Date(r.startsAt * 1000) : null;
+  const diffSec = startsAt ? Math.max(0, Math.floor((startsAt.getTime() - Date.now()) / 1000)) : null;
+  const cd = diffSec === null ? '—' :
+    `${String(Math.floor(diffSec / 3600)).padStart(2,'0')}:${String(Math.floor((diffSec % 3600) / 60)).padStart(2,'0')}:${String(diffSec % 60).padStart(2,'0')}`;
+
+  async function cancelReservation() {
+    if (!r.code) return;
+    if (!confirm('정말 취소하시겠습니까? 환불은 정책에 따라 적용됩니다.')) return;
+    const res = await fetch('/api/reservations/' + r.code + '/cancel', { method: 'POST', credentials: 'same-origin' });
+    const data = await res.json();
+    if (res.ok) {
+      alert(`취소 완료. 환불 ${data.refund_pct}% (${(data.refund_amount).toLocaleString()}원)`);
+      window.location.href = '/me/reservations';
+    } else {
+      alert('실패: ' + (data.error || res.status));
+    }
+  }
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--bg-soft)" }}>
@@ -338,7 +365,7 @@ function EntryGuide({ onBack, reservation }) {
         <div style={{ background: "var(--brand-500)", color: "#fff", padding: "20px 16px 24px", textAlign: "center" }}>
           <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6, letterSpacing: 0.3 }}>예약 시작까지</div>
           <div className="fw-700 num" style={{ fontSize: 38, letterSpacing: "-1px", lineHeight: 1, marginBottom: 8 }}>
-            03:42:18
+            {cd}
           </div>
           <div style={{ fontSize: 13, opacity: 0.9 }}>{r.day} · {r.time}</div>
         </div>
@@ -377,17 +404,19 @@ function EntryGuide({ onBack, reservation }) {
               <span className="text-sub">코트</span><span className="fw-600">{r.court}</span>
               <span className="text-sub">시간</span><span className="fw-600 num">{r.time}</span>
               <span className="text-sub">주소</span>
-              <span className="fw-500">서울 강남구 테헤란로 123 · B2층</span>
+              <span className="fw-500">{venueAddress || '주소 미등록'}</span>
               <span className="text-sub">전화</span>
-              <span className="fw-600 num">02-555-3849</span>
+              <span className="fw-600 num">{venuePhone || '—'}</span>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button type="button" className="btn btn-line btn-sm" style={{ flex: 1, height: 38 }}>
+              <a href={`https://map.naver.com/p/search/${encodeURIComponent(venueAddress || v?.name || '')}`} target="_blank" rel="noopener" className="btn btn-line btn-sm" style={{ flex: 1, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
                 {I.pin(14)} 길찾기
-              </button>
-              <button type="button" className="btn btn-line btn-sm" style={{ flex: 1, height: 38 }}>
-                전화 02-555-3849
-              </button>
+              </a>
+              {venuePhone && (
+                <a href={`tel:${venuePhone}`} className="btn btn-line btn-sm" style={{ flex: 1, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+                  전화 {venuePhone}
+                </a>
+              )}
             </div>
           </div>
 
@@ -452,8 +481,8 @@ function EntryGuide({ onBack, reservation }) {
       </div>
 
       <div style={{ flexShrink: 0, padding: "10px 16px 14px", background: "#fff", borderTop: "1px solid var(--line)", display: "flex", gap: 10 }}>
-        <button type="button" className="btn btn-md btn-line" style={{ width: 120 }}>예약 취소</button>
-        <button type="button" className="btn btn-primary btn-md" style={{ flex: 1 }}>길찾기 시작</button>
+        <button type="button" onClick={cancelReservation} className="btn btn-md btn-line" style={{ width: 120, color: "var(--hot-700)" }}>예약 취소</button>
+        <a href={`https://map.naver.com/p/search/${encodeURIComponent(venueAddress || v?.name || '')}`} target="_blank" rel="noopener" className="btn btn-primary btn-md" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>길찾기 시작</a>
       </div>
     </div>
   );
@@ -478,9 +507,24 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
     canceled:  { label: "취소됨",    bg: "var(--gray-100)",          color: "var(--gray-500)",         dot: "var(--gray-300)" },
   }[r.status] || { label: "—", bg: "var(--gray-100)", color: "var(--text-sub)", dot: "var(--gray-500)" };
 
-  // 결제 내역 계산 (price를 코트 + 옵션으로 분해, 적당히 실제같이)
-  const courtPrice = r.price ? Math.round(r.price * 0.93 / 1000) * 1000 : 49000;
-  const extras = r.price ? r.price - courtPrice : 3000;
+  // 결제 내역 — 백엔드에서 정확한 수치로 받아옴 (없으면 fallback 추정)
+  const courtPrice = r.basePrice  != null ? r.basePrice  : Math.round((r.price || 0) * 0.93);
+  const extras     = r.extrasPrice != null ? r.extrasPrice : Math.max(0, (r.price || 0) - courtPrice);
+  const discountPct= r.discountPct || 0;
+  const refundPolicy = r.refundPolicy || { p24: 100, p1: 50, lt1: 0 };
+
+  async function cancelReservation() {
+    if (!r.code) return;
+    if (!confirm('정말 취소하시겠습니까? 환불은 정책에 따라 적용됩니다.')) return;
+    const res = await fetch('/api/reservations/' + r.code + '/cancel', { method: 'POST', credentials: 'same-origin' });
+    const data = await res.json();
+    if (res.ok) {
+      alert(`취소 완료. 환불 ${data.refund_pct}% (${(data.refund_amount).toLocaleString()}원)`);
+      window.location.href = '/me/reservations';
+    } else {
+      alert('실패: ' + (data.error || res.status));
+    }
+  }
 
   const heroBg = isConfirmed ? "var(--brand-500)" : (isPending ? "#fff" : "var(--gray-50)");
   const heroFg = isConfirmed ? "#fff" : "var(--text)";
@@ -637,17 +681,17 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
       {/* Footer */}
       {!isPast && (
         <div style={{ flexShrink: 0, padding: "10px 16px 14px", background: "#fff", borderTop: "1px solid var(--line)", display: "flex", gap: 10 }}>
-          <button type="button" className="btn btn-md btn-line" style={{ width: 110, color: "var(--hot-700)" }}>예약 취소</button>
+          <button type="button" onClick={cancelReservation} className="btn btn-md btn-line" style={{ width: 110, color: "var(--hot-700)" }}>예약 취소</button>
           {isConfirmed
             ? <button type="button" className="btn btn-primary btn-md" onClick={onEntry} style={{ flex: 1 }}>입장 안내 보기</button>
-            : <button type="button" className="btn btn-primary btn-md" style={{ flex: 1 }}>입금 계좌 보기</button>
+            : <button type="button" className="btn btn-primary btn-md" onClick={() => window.location.href = '/reservations/' + r.code} style={{ flex: 1 }}>입금 계좌 보기</button>
           }
         </div>
       )}
       {r.status === "done" && (
         <div style={{ flexShrink: 0, padding: "10px 16px 14px", background: "#fff", borderTop: "1px solid var(--line)", display: "flex", gap: 10 }}>
           <button type="button" className="btn btn-md btn-line" style={{ flex: 1 }} onClick={()=> onVenue && onVenue(v.id)}>다시 예약</button>
-          <button type="button" className="btn btn-primary btn-md" style={{ flex: 1 }}>리뷰 작성</button>
+          <button type="button" className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={() => alert('리뷰 시스템은 v2에서 제공됩니다')}>리뷰 작성</button>
         </div>
       )}
     </div>

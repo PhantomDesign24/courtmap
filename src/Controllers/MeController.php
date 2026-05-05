@@ -13,15 +13,17 @@ final class MeController extends Controller
         $user = $this->requireAuth();
         $uid = (int) $user['id'];
 
-        // 단골 구장
+        // 단골 구장 (실제 이용 횟수 포함)
         $favorites = Db::fetchAll(
             'SELECT v.id, v.name, v.area,
-                    (SELECT url FROM venue_photos WHERE venue_id = v.id AND is_main = 1 LIMIT 1) AS img
+                    (SELECT url FROM venue_photos WHERE venue_id = v.id AND is_main = 1 LIMIT 1) AS img,
+                    (SELECT COUNT(*) FROM reservations WHERE user_id = ? AND venue_id = v.id AND status IN ("confirmed","done")) AS use_count,
+                    f.notify_open_slot
              FROM favorites f
              JOIN venues v ON v.id = f.venue_id
              WHERE f.user_id = ? AND v.status = "active"
              ORDER BY f.created_at DESC',
-            [$uid]
+            [$uid, $uid]
         );
 
         // 보유 쿠폰

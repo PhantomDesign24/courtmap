@@ -36,6 +36,19 @@ final class VenueController extends Controller
             [$id]
         );
 
+        $hours  = Db::fetchAll('SELECT day_of_week, open_time, close_time, is_closed FROM venue_hours WHERE venue_id = ? ORDER BY day_of_week', [$id]);
+        $venueTags = Db::fetchAll('SELECT ft.name FROM venue_facility_tags vft JOIN facility_tags ft ON ft.id = vft.tag_id WHERE vft.venue_id = ? ORDER BY ft.sort_order', [$id]);
+        $photos = Db::fetchAll('SELECT url FROM venue_photos WHERE venue_id = ? ORDER BY is_main DESC, sort_order', [$id]);
+        $coachesRaw = Db::fetchAll('SELECT id, name, career, price_per_lesson, duration_min, img_url FROM coaches WHERE venue_id = ? AND status = "active" ORDER BY sort_order, id', [$id]);
+        $coaches = array_map(static fn($c) => [
+            'id'           => (int) $c['id'],
+            'name'         => $c['name'],
+            'career'       => $c['career'] ?: '',
+            'price'        => (int) $c['price_per_lesson'],
+            'duration_min' => (int) $c['duration_min'],
+            'img'          => $c['img_url'] ?: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=200&q=70',
+        ], $coachesRaw);
+
         $isFav = false;
         if ($u = Auth::user()) {
             $isFav = (bool) Db::fetch('SELECT user_id FROM favorites WHERE user_id = ? AND venue_id = ?', [$u['id'], $id]);
@@ -92,6 +105,22 @@ final class VenueController extends Controller
                     'id'   => (int) $c['id'],
                     'name' => $c['name'],
                 ], $courts),
+                'venueDetail' => [
+                    'address'     => $v['address'],
+                    'phone'       => $v['phone'],
+                    'description' => $v['description'] ?? '',
+                    'lat'         => (float) $v['lat'],
+                    'lng'         => (float) $v['lng'],
+                    'hours'       => array_map(static fn($h) => [
+                        'dow'   => (int) $h['day_of_week'],
+                        'open'  => substr($h['open_time'], 0, 5),
+                        'close' => substr($h['close_time'], 0, 5),
+                        'closed'=> (bool) $h['is_closed'],
+                    ], $hours),
+                    'tags'        => array_map(static fn($t) => $t['name'], $venueTags),
+                    'photos'      => array_map(static fn($p) => $p['url'], $photos),
+                    'coaches'     => $coaches,
+                ],
             ],
         ], layout: null);
     }

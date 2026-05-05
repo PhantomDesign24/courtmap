@@ -56,26 +56,33 @@ final class ReservationController extends Controller
         $startH = (int) $r['start_hour'];
         $duration = (int) $r['duration_hours'];
 
+        $vAddr = \App\Core\Db::fetch('SELECT address, phone FROM venues WHERE id = ?', [(int) $r['venue_id']]);
+
         $reservation = [
-            'code'     => $r['code'],
-            'name'     => $user['name'],
-            'phone'    => $user['phone'],
-            'venue'    => [
+            'code'         => $r['code'],
+            'name'         => $user['name'],
+            'phone'        => $user['phone'],
+            'venue'        => [
                 'id'       => (int) $r['venue_id'],
                 'name'     => $r['venue_name'],
                 'area'     => $r['venue_area'],
                 'img'      => $r['img'],
-                'walkMin'  => 10,
+                'address'  => $vAddr['address'] ?? '',
+                'phone'    => $vAddr['phone']   ?? '',
             ],
-            'day'      => sprintf('%d월 %d일 (%s)', (int) $d->format('n'), (int) $d->format('j'), $kdays[(int) $d->format('w')]),
-            'time'     => sprintf('%02d:00 ~ %02d:00', $startH, $startH + $duration),
-            'court'    => $r['court_name'],
+            'venueAddress' => $vAddr['address'] ?? '',
+            'venuePhone'   => $vAddr['phone']   ?? '',
+            'day'          => sprintf('%d월 %d일 (%s)', (int) $d->format('n'), (int) $d->format('j'), $kdays[(int) $d->format('w')]),
+            'time'         => sprintf('%02d:00 ~ %02d:00', $startH, $startH + $duration),
+            'court'        => $r['court_name'],
+            'startsAt'     => strtotime($r['reservation_date'] . ' ' . sprintf('%02d:00:00', $startH)),
         ];
 
         $this->view('app', [
-            'title'  => '입장 안내 — 코트맵',
-            'screen' => 'entry',
-            'data'   => [
+            'title'   => '입장 안내 — 코트맵',
+            'noindex' => true,
+            'screen'  => 'entry',
+            'data'    => [
                 'reservation' => $reservation,
                 'venues'      => VenueQueries::listForCards(),
             ],

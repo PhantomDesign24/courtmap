@@ -159,17 +159,23 @@ function App() {
 
   if (screen === 'reservation_detail') {
     const b = window.__DATA__.booking || {};
-    // ReservationDetail 가 받는 shape 으로 매핑
+    const md = b.day && b.day.date
+      ? `${parseInt(b.day.date.slice(5,7), 10)}월 ${parseInt(b.day.date.slice(8,10), 10)}일`
+      : `${b.day?.day}일`;
     const r = {
-      id: b.code,
-      code: b.code,
-      status: b.status,
-      venue: b.venue,
-      day: `${b.day?.day}월 ${b.day?.day}일 (${b.day?.dow})`,
-      time: `${String(b.hour).padStart(2,'0')}:00 ~ ${String(b.hour + b.duration).padStart(2,'0')}:00`,
-      court: b.court_name,
-      price: b.total,
-      recurring: false,
+      id:           b.code,
+      code:         b.code,
+      status:       b.status,
+      venue:        b.venue,
+      day:          `${md} (${b.day?.dow})`,
+      time:         `${String(b.hour).padStart(2,'0')}:00 ~ ${String(b.hour + b.duration).padStart(2,'0')}:00`,
+      court:        b.court_name,
+      price:        b.total,
+      basePrice:    b.basePrice,
+      extrasPrice:  b.extrasPrice,
+      discountPct:  b.discountPct,
+      refundPolicy: b.refundPolicy,
+      recurring:    false,
     };
     return (
       <Mobile hideTab>

@@ -93,7 +93,11 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
             <button type="button" onClick={handleFav} style={{ width: 36, height: 36, borderRadius: 18, background: "rgba(255,255,255,.92)", border: "none", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.heart(20, isFav ? "var(--hot-500)" : "currentColor", isFav ? "var(--hot-500)" : "none")}</button>
           </div>
         </div>
-        <div style={{ position: "absolute", right: 12, bottom: 12, background: "rgba(0,0,0,.6)", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 9px", borderRadius: 999 }}>1 / 8</div>
+        {(() => {
+          const photos = (window.__DATA__ && window.__DATA__.venueDetail && window.__DATA__.venueDetail.photos) || [];
+          const total = Math.max(1, photos.length);
+          return <div style={{ position: "absolute", right: 12, bottom: 12, background: "rgba(0,0,0,.6)", color: "#fff", fontSize: 11, fontWeight: 600, padding: "4px 9px", borderRadius: 999 }}>1 / {total}</div>;
+        })()}
       </div>
 
       {/* Scroll body */}
@@ -241,53 +245,74 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
 
         {tab === "lesson" && (
           <div style={{ padding: 16 }}>
-            {[
-              { name: "김재훈 코치", career: "前 국가대표 상비군 · 12년", price: 60000, img: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=200&q=70" },
-              { name: "이서연 코치", career: "체육교육 전공 · 입문자 전문", price: 45000, img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=70" },
-              { name: "박민수 코치", career: "전국체전 입상 · 8년", price: 55000, img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=70" },
-            ].map((c, i) => (
-              <div key={i} className="card" style={{ display: "flex", gap: 12, padding: 12, marginBottom: 10 }}>
-                <Photo src={c.img} radius={999} style={{ width: 56, height: 56, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div className="fw-700" style={{ fontSize: 14, marginBottom: 2 }}>{c.name}</div>
-                  <div className="text-sub" style={{ fontSize: 12, marginBottom: 6 }}>{c.career}</div>
-                  <div className="row">
-                    <span className="fw-700 num">{won(c.price)}</span>
-                    <span className="text-sub" style={{ fontSize: 11.5, marginLeft: 2 }}>/회</span>
-                    <div className="spacer"/>
-                    <button type="button" className="btn btn-sm btn-line">예약</button>
+            {(() => {
+              const detail = (window.__DATA__ && window.__DATA__.venueDetail) || {};
+              const coaches = detail.coaches || [];
+              if (!coaches.length) return <div className="text-sub" style={{ textAlign: "center", padding: 40, fontSize: 13 }}>등록된 강사가 없습니다.</div>;
+              return coaches.map((c) => (
+                <div key={c.id} className="card" style={{ display: "flex", gap: 12, padding: 12, marginBottom: 10 }}>
+                  <Photo src={c.img} radius={999} style={{ width: 56, height: 56, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="fw-700" style={{ fontSize: 14, marginBottom: 2 }}>{c.name}</div>
+                    <div className="text-sub" style={{ fontSize: 12, marginBottom: 6 }}>{c.career}</div>
+                    <div className="row">
+                      <span className="fw-700 num">{won(c.price)}</span>
+                      <span className="text-sub" style={{ fontSize: 11.5, marginLeft: 2 }}>/{c.duration_min}분</span>
+                      <div className="spacer"/>
+                      <button type="button" className="btn btn-sm btn-line" onClick={async () => {
+                        const date = prompt('레슨 날짜 (YYYY-MM-DD)', new Date().toISOString().slice(0,10));
+                        if (!date) return;
+                        const hourStr = prompt('시작 시각 (0~23)', '14');
+                        if (!hourStr) return;
+                        const fd = new FormData();
+                        fd.append('coach_id', c.id);
+                        fd.append('lesson_date', date);
+                        fd.append('start_hour', hourStr);
+                        const res = await fetch('/api/lessons', { method: 'POST', body: fd, credentials: 'same-origin' });
+                        const data = await res.json();
+                        alert(res.ok ? `레슨 예약 신청 완료 (${data.code})` : ('실패: ' + (data.error || res.status)));
+                      }}>예약</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         )}
 
-        {tab === "info" && (
-          <div style={{ padding: 16 }}>
-            <div className="card" style={{ padding: 14, marginBottom: 10 }}>
-              <div className="fw-700" style={{ marginBottom: 10 }}>운영 시간</div>
-              <div className="row" style={{ fontSize: 13, marginBottom: 4 }}><span className="text-sub" style={{ width: 80 }}>평일</span><span>10:00 ~ 24:00</span></div>
-              <div className="row" style={{ fontSize: 13, marginBottom: 4 }}><span className="text-sub" style={{ width: 80 }}>주말</span><span>09:00 ~ 24:00</span></div>
-              <div className="row" style={{ fontSize: 13 }}><span className="text-sub" style={{ width: 80 }}>공휴일</span><span>10:00 ~ 22:00 · 2시간 단위</span></div>
-            </div>
-            <div className="card" style={{ padding: 14, marginBottom: 10 }}>
-              <div className="fw-700" style={{ marginBottom: 10 }}>편의시설</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {v.tags.map((t,i) => <span key={i} className="badge badge-gray">{t}</span>)}
-                <span className="badge badge-gray">에어컨</span>
-                <span className="badge badge-gray">정수기</span>
+        {tab === "info" && (() => {
+          const detail = (window.__DATA__ && window.__DATA__.venueDetail) || {};
+          const KOR = ['일','월','화','수','목','금','토'];
+          const tags = detail.tags || [];
+          const hours = detail.hours || [];
+          return (
+            <div style={{ padding: 16 }}>
+              <div className="card" style={{ padding: 14, marginBottom: 10 }}>
+                <div className="fw-700" style={{ marginBottom: 10 }}>운영 시간</div>
+                {hours.length === 0 && <div className="text-sub" style={{ fontSize: 13 }}>운영시간 미등록</div>}
+                {hours.map(h => (
+                  <div key={h.dow} className="row" style={{ fontSize: 13, marginBottom: 4 }}>
+                    <span className="text-sub" style={{ width: 50 }}>{KOR[h.dow]}요일</span>
+                    <span>{h.closed ? '휴무' : `${h.open} ~ ${h.close === '23:59' ? '24:00' : h.close}`}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="card" style={{ padding: 14, marginBottom: 10 }}>
+                <div className="fw-700" style={{ marginBottom: 10 }}>편의시설</div>
+                {tags.length === 0 ? <div className="text-sub" style={{ fontSize: 13 }}>등록된 시설 정보가 없습니다.</div> : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {tags.map((t, i) => <span key={i} className="badge badge-gray">{t}</span>)}
+                  </div>
+                )}
+              </div>
+              <div className="card" style={{ padding: 14 }}>
+                <div className="fw-700" style={{ marginBottom: 8 }}>위치</div>
+                <div className="text-sub" style={{ fontSize: 13, marginBottom: 4 }}>{detail.address || v.area}</div>
+                <div className="text-sub" style={{ fontSize: 12 }}>{detail.phone || ''}</div>
               </div>
             </div>
-            <div className="card" style={{ padding: 14 }}>
-              <div className="fw-700" style={{ marginBottom: 8 }}>위치</div>
-              <div style={{ height: 120, borderRadius: 10, overflow: "hidden", marginBottom: 8 }}>
-                <MiniMap height={120} pinCount={1} />
-              </div>
-              <div className="text-sub" style={{ fontSize: 13 }}>{v.area} · 역삼역 3번 출구 도보 {v.walkMin}분</div>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div style={{ height: 80 }}/>
       </div>
@@ -360,7 +385,7 @@ function U4ReserveSheet({ selection, onClose, onConfirm, courtsList = [], equipm
           <div className="card" style={{ padding: 14, marginBottom: 14, background: "var(--gray-25)", border: "1px solid var(--line)" }}>
             <div className="row gap-6" style={{ marginBottom: 6 }}>
               {I.clock(14, "var(--brand-500)")}
-              <span className="fw-700">2026년 5월 {sel.day.day}일 ({sel.day.dow})</span>
+              <span className="fw-700">{sel.day.date ? `${sel.day.date.getFullYear()}년 ${sel.day.date.getMonth()+1}월 ${sel.day.date.getDate()}일 (${sel.day.dow})` : `${sel.day.day}일 (${sel.day.dow})`}</span>
               {sel.day.isHoliday && <span className="badge badge-warn">공휴일</span>}
             </div>
             <div className="num fw-700" style={{ fontSize: 20, letterSpacing: "-0.5px" }}>

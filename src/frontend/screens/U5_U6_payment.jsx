@@ -60,7 +60,7 @@ function U5Deposit({ booking, onBack, onPaid }) {
             </div>
             <div className="hr" style={{ margin: "0 0 12px" }}/>
             <div style={{ display: "grid", gridTemplateColumns: "70px 1fr", rowGap: 8, fontSize: 13 }}>
-              <span className="text-sub">날짜</span><span className="fw-600">2026년 5월 {b.day.day}일 ({b.day.dow})</span>
+              <span className="text-sub">날짜</span><span className="fw-600">{b.day.date ? `${b.day.date.slice(0,4)}년 ${parseInt(b.day.date.slice(5,7),10)}월 ${parseInt(b.day.date.slice(8,10),10)}일 (${b.day.dow})` : `${b.day.day}일 (${b.day.dow})`}</span>
               <span className="text-sub">시간</span><span className="fw-600 num">{String(b.hour).padStart(2,"0")}:00 ~ {String(b.hour + b.duration).padStart(2,"0")}:00 <span className="text-sub" style={{fontWeight:500}}>({b.duration}시간)</span></span>
               <span className="text-sub">코트</span><span className="fw-600">{["A","B","C","D"][b.court-1]}코트</span>
               {(b.rentRacket || b.rentShuttle) && (

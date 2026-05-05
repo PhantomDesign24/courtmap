@@ -247,6 +247,9 @@ final class ReservationService
             'rentRacket'     => false,
             'rentShuttle'    => false,
             'total'          => (int) $r['total_price'],
+            'basePrice'      => (int) $r['base_price'],
+            'extrasPrice'    => (int) $r['extras_price'],
+            'discountPct'    => (int) $r['discount_pct'],
             'depositor_name' => $r['depositor_name'],
             'bank' => [
                 'name'    => $r['bank_name'],
@@ -254,6 +257,12 @@ final class ReservationService
                 'holder'  => $r['bank_holder'],
             ],
             'deposit_due_at' => $r['deposit_due_at'],
+            'refundPolicy' => [
+                'p24' => (int) $r['refund_24h_pct'],
+                'p1'  => (int) $r['refund_1h_pct'],
+                'lt1' => (int) $r['refund_lt1h_pct'],
+            ],
+            'startsAt' => strtotime($r['reservation_date'] . ' ' . sprintf('%02d:00:00', (int) $r['start_hour'])),
         ];
     }
 

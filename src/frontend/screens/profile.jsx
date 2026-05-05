@@ -97,7 +97,8 @@ function ProfileFavorites({ onBack, favorites = [] }) {
                   <div className="fw-700" style={{ fontSize: 14, marginBottom: 3 }}>{v.name}</div>
                   <div className="text-sub" style={{ fontSize: 12, marginBottom: 4 }}>{v.area}</div>
                   <div className="row gap-4">
-                    <span className="badge badge-success" style={{ fontSize: 10.5 }}>● 알림 ON</span>
+                    {v.notify_open_slot ? <span className="badge badge-success" style={{ fontSize: 10.5 }}>● 알림 ON</span> : <span className="badge badge-gray" style={{ fontSize: 10.5 }}>알림 OFF</span>}
+                    <span className="num text-sub" style={{ fontSize: 11.5, marginLeft: 6 }}>총 {v.use_count || 0}회 이용</span>
                   </div>
                 </div>
               </div>
