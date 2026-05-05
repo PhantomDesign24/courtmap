@@ -12,6 +12,8 @@ $e = static fn(?string $s): string => View::e($s);
 /** @var array $coupons */
 /** @var array $memberships */
 /** @var array $recent */
+/** @var array $photos */
+/** @var ?string $flashErr */
 $kdays = ['일','월','화','수','목','금','토'];
 $type_label = ['default'=>'기본','dow'=>'요일','holiday'=>'공휴일','specific_date'=>'특정 날짜'];
 $st_label = ['pending'=>'대기','confirmed'=>'확정','canceled'=>'취소','no_show'=>'노쇼','done'=>'완료'];
@@ -40,6 +42,7 @@ $venueId = (int)$venue['id'];
 <div class="op-tabs" style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto">
   <?php foreach ([
     'overview'    => '개요',
+    'photos'      => '사진',
     'reservations'=> '최근 예약',
     'courts'      => '코트',
     'rules'       => '슬롯 규칙',
@@ -88,6 +91,50 @@ $venueId = (int)$venue['id'];
       <div style="margin-top:6px"><span class="op-mute">예금주</span> <span class="fw-600"><?= $e($venue['bank_holder']) ?></span></div>
       <div style="margin-top:6px"><span class="op-mute">입금 기한</span> <span class="fw-600 num"><?= (int)$venue['deposit_due_hours'] ?>시간</span></div>
     </div>
+  </section>
+</div>
+
+<!-- 사진 -->
+<div class="op-tab-pane" data-pane="photos" style="display:none">
+  <?php if (!empty($flashErr)): ?>
+    <div class="op-card" style="padding:12px 16px;color:#c0392b;background:#fff5f4;border-color:#ffd2cc"><?= $e($flashErr) ?></div>
+  <?php endif; ?>
+  <section class="op-card">
+    <div class="op-card-head"><h2>업로드</h2></div>
+    <form method="post" enctype="multipart/form-data" action="/operator/venues/<?= $venueId ?>/photos" style="padding:14px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required style="font-size:13px">
+      <button type="submit" class="btn btn-primary btn-sm">업로드</button>
+      <span class="op-mute" style="font-size:12px">JPG · PNG · WEBP, 최대 2MB · 첫 업로드는 자동으로 대표 사진</span>
+    </form>
+  </section>
+  <section class="op-card">
+    <div class="op-card-head"><h2>등록된 사진 <span class="op-pill"><?= count($photos) ?></span></h2></div>
+    <?php if (!$photos): ?>
+      <div class="op-empty">사진이 없습니다.</div>
+    <?php else: ?>
+      <div style="padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px">
+        <?php foreach ($photos as $p): ?>
+          <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--gray-50)">
+            <div style="aspect-ratio:4/3;background:#000;position:relative">
+              <img src="<?= $e($p['url']) ?>" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+              <?php if ((int)$p['is_main'] === 1): ?>
+                <span class="badge badge-success" style="position:absolute;top:8px;left:8px">대표</span>
+              <?php endif; ?>
+            </div>
+            <div style="padding:8px;display:flex;gap:6px">
+              <?php if ((int)$p['is_main'] !== 1): ?>
+                <form method="post" action="/operator/venues/<?= $venueId ?>/photos/<?= (int)$p['id'] ?>/main" style="flex:1">
+                  <button type="submit" class="btn btn-line btn-sm" style="width:100%">대표</button>
+                </form>
+              <?php endif; ?>
+              <form method="post" action="/operator/venues/<?= $venueId ?>/photos/<?= (int)$p['id'] ?>/delete" onsubmit="return confirm('삭제할까요?');" style="flex:1">
+                <button type="submit" class="btn btn-line btn-sm" style="width:100%">삭제</button>
+              </form>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </section>
 </div>
 

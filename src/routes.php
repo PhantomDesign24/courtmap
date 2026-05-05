@@ -96,6 +96,9 @@ $router->post('/operator/venues/{id}',                  [OpVenue::class,     'up
 $router->post('/operator/venues/{id}/courts/add',       [OpVenue::class,     'addCourt']);
 $router->post('/operator/venues/{id}/courts/{cid}/update', [OpVenue::class,  'updateCourt']);
 $router->post('/operator/venues/{id}/courts/{cid}/delete', [OpVenue::class,  'deleteCourt']);
+$router->post('/operator/venues/{id}/photos',                [OpVenue::class, 'uploadPhoto']);
+$router->post('/operator/venues/{id}/photos/{pid}/main',     [OpVenue::class, 'setMainPhoto']);
+$router->post('/operator/venues/{id}/photos/{pid}/delete',   [OpVenue::class, 'deletePhoto']);
 
 // ─── API ──────────────────────────────────────────────────
 $router->get ('/api/health',                       [HealthController::class, 'index']);

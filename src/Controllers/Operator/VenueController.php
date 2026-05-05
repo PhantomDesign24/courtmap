@@ -248,6 +248,8 @@ final class VenueController extends Controller
              FROM memberships m WHERE m.venue_id = ? ORDER BY id DESC',
             [$venueId]
         );
+        $photos = Db::fetchAll('SELECT * FROM venue_photos WHERE venue_id = ? ORDER BY is_main DESC, sort_order, id', [$venueId]);
+
         $recent = Db::fetchAll(
             'SELECT r.code, r.reservation_date, r.start_hour, r.duration_hours, r.status, r.total_price,
                     c.name AS court_name, u.name AS user_name
@@ -273,7 +275,95 @@ final class VenueController extends Controller
             'coupons'     => $coupons,
             'memberships' => $memberships,
             'recent'      => $recent,
+            'photos'      => $photos,
+            'flashErr'    => $_SESSION['flash_err'] ?? null,
         ], layout: 'operator');
+        unset($_SESSION['flash_err']);
+    }
+
+    public function uploadPhoto(string $id): void
+    {
+        [$user, $v] = $this->loadOwn((int) $id);
+        $venueId = (int) $v['id'];
+
+        if (!isset($_FILES['photo']) || $_FILES['photo']['error'] === UPLOAD_ERR_NO_FILE) {
+            $this->redirect('/operator/venues/' . $venueId . '#photos');
+        }
+        if ($_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['flash_err'] = '업로드 실패 (코드 ' . (int) $_FILES['photo']['error'] . ')';
+            $this->redirect('/operator/venues/' . $venueId . '#photos');
+        }
+        if ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
+            $_SESSION['flash_err'] = '파일은 2MB 이하만 업로드할 수 있어요.';
+            $this->redirect('/operator/venues/' . $venueId . '#photos');
+        }
+
+        $tmp  = $_FILES['photo']['tmp_name'];
+        $mime = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $tmp) ?: '';
+        $extByMime = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if (!isset($extByMime[$mime])) {
+            $_SESSION['flash_err'] = 'JPG · PNG · WEBP 만 업로드할 수 있어요.';
+            $this->redirect('/operator/venues/' . $venueId . '#photos');
+        }
+        $ext = $extByMime[$mime];
+
+        $dir = dirname(__DIR__, 3) . '/public/uploads/venues/' . $venueId;
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            $_SESSION['flash_err'] = '업로드 폴더 생성 실패';
+            $this->redirect('/operator/venues/' . $venueId . '#photos');
+        }
+        $name    = bin2hex(random_bytes(8)) . '.' . $ext;
+        $absPath = $dir . '/' . $name;
+        if (!move_uploaded_file($tmp, $absPath)) {
+            $_SESSION['flash_err'] = '파일 저장 실패';
+            $this->redirect('/operator/venues/' . $venueId . '#photos');
+        }
+        @chmod($absPath, 0644);
+        $url = '/uploads/venues/' . $venueId . '/' . $name;
+
+        $hasMain = Db::fetch('SELECT id FROM venue_photos WHERE venue_id = ? AND is_main = 1', [$venueId]);
+        $maxSort = (int) (Db::fetch('SELECT COALESCE(MAX(sort_order), -1) AS m FROM venue_photos WHERE venue_id = ?', [$venueId])['m'] ?? -1);
+        Db::insert('venue_photos', [
+            'venue_id'   => $venueId,
+            'url'        => $url,
+            'sort_order' => $maxSort + 1,
+            'is_main'    => $hasMain ? 0 : 1,
+        ]);
+        $this->redirect('/operator/venues/' . $venueId . '#photos');
+    }
+
+    public function setMainPhoto(string $id, string $pid): void
+    {
+        [$user, $v] = $this->loadOwn((int) $id);
+        $venueId = (int) $v['id'];
+        $p = Db::fetch('SELECT id FROM venue_photos WHERE id = ? AND venue_id = ?', [(int) $pid, $venueId]);
+        if (!$p) Response::notFound();
+        Db::transaction(function () use ($venueId, $p) {
+            Db::query('UPDATE venue_photos SET is_main = 0 WHERE venue_id = ?', [$venueId]);
+            Db::query('UPDATE venue_photos SET is_main = 1 WHERE id = ?', [(int) $p['id']]);
+        });
+        $this->redirect('/operator/venues/' . $venueId . '#photos');
+    }
+
+    public function deletePhoto(string $id, string $pid): void
+    {
+        [$user, $v] = $this->loadOwn((int) $id);
+        $venueId = (int) $v['id'];
+        $p = Db::fetch('SELECT id, url, is_main FROM venue_photos WHERE id = ? AND venue_id = ?', [(int) $pid, $venueId]);
+        if (!$p) Response::notFound();
+
+        $rel = (string) $p['url'];
+        if (str_starts_with($rel, '/uploads/venues/' . $venueId . '/')) {
+            $abs = dirname(__DIR__, 3) . '/public' . $rel;
+            if (is_file($abs)) @unlink($abs);
+        }
+        Db::query('DELETE FROM venue_photos WHERE id = ?', [(int) $p['id']]);
+
+        if ((int) $p['is_main'] === 1) {
+            $next = Db::fetch('SELECT id FROM venue_photos WHERE venue_id = ? ORDER BY sort_order, id LIMIT 1', [$venueId]);
+            if ($next) Db::query('UPDATE venue_photos SET is_main = 1 WHERE id = ?', [(int) $next['id']]);
+        }
+        $this->redirect('/operator/venues/' . $venueId . '#photos');
     }
 
     /** @return array{0: array, 1: array} */
