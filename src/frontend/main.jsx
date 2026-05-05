@@ -335,18 +335,13 @@ function HomeWithFilters() {
     refresh(null, area);
   }
 
-  // HomeDealFirst 의 TimeChips 가 onSelect 안 받음 → DOM 이벤트 위임으로 처리
+  // 시간칩만 매칭 (.chip-time, data-time-range)
   React.useEffect(() => {
     const handler = (e) => {
-      const chip = e.target.closest('.chip');
+      const chip = e.target.closest('.chip-time');
       if (!chip) return;
-      const label = chip.textContent.trim();
-      const range = label.startsWith('지금') ? 'now'
-                  : label.includes('1시간')   ? '1h'
-                  : label.includes('2시간')   ? '2h'
-                  : label.includes('오늘')    ? 'today'
-                  : label.includes('주말')    ? 'weekend'
-                  : null;
+      const map = { now: 'now', '1h': '1h', '2h': '2h', today: 'today', wk: 'weekend' };
+      const range = map[chip.dataset.timeRange];
       if (range) refresh(range, location);
     };
     document.addEventListener('click', handler);

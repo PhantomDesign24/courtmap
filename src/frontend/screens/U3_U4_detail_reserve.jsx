@@ -54,6 +54,7 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
   const [dayIdx, setDayIdx] = React.useState(0);
   const [isFav, setIsFav] = React.useState(!!isFavInit);
   const [apiData, setApiData] = React.useState(null);
+  const [lessonCoach, setLessonCoach] = React.useState(null);
   const week = makeWeek(TODAY);
   const day = week[dayIdx];
 
@@ -240,7 +241,7 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
                           cursor: disabled ? "default" : "pointer",
                         }}
                       >
-                        {disabled ? "마감" : c.hot ? `−${30}%` : "예약"}
+                        {disabled ? "마감" : c.hot ? `−${c.discount || 0}%` : "예약"}
                       </button>
                     );
                   })}
@@ -266,19 +267,7 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
                       <span className="fw-700 num">{won(c.price)}</span>
                       <span className="text-sub" style={{ fontSize: 11.5, marginLeft: 2 }}>/{c.duration_min}분</span>
                       <div className="spacer"/>
-                      <button type="button" className="btn btn-sm btn-line" onClick={async () => {
-                        const date = prompt('레슨 날짜 (YYYY-MM-DD)', new Date().toISOString().slice(0,10));
-                        if (!date) return;
-                        const hourStr = prompt('시작 시각 (0~23)', '14');
-                        if (!hourStr) return;
-                        const fd = new FormData();
-                        fd.append('coach_id', c.id);
-                        fd.append('lesson_date', date);
-                        fd.append('start_hour', hourStr);
-                        const res = await fetch('/api/lessons', { method: 'POST', body: fd, credentials: 'same-origin' });
-                        const data = await res.json();
-                        alert(res.ok ? `레슨 예약 신청 완료 (${data.code})` : ('실패: ' + (data.error || res.status)));
-                      }}>예약</button>
+                      <button type="button" className="btn btn-sm btn-line" onClick={() => setLessonCoach(c)}>예약</button>
                     </div>
                   </div>
                 </div>
@@ -334,10 +323,11 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
           </div>
         </div>
         <div className="spacer"/>
-        <button type="button" className="btn btn-primary btn-lg" style={{ minWidth: 180 }}>
+        <button type="button" onClick={() => { setTab('court'); document.querySelector('.app-body')?.scrollTo({ top: 9999, behavior: 'smooth' }); }} className="btn btn-primary btn-lg" style={{ minWidth: 180 }}>
           예약하기
         </button>
       </div>
+      {lessonCoach && <LessonBookSheet coach={lessonCoach} onClose={() => setLessonCoach(null)} />}
     </div>
   );
 }
@@ -518,4 +508,62 @@ function U4ReserveSheet({ selection, onClose, onConfirm, courtsList = [], equipm
   );
 }
 
-Object.assign(window, { U3Detail, U4ReserveSheet, makeWeek });
+// ───────────── 레슨 예약 시트 ─────────────
+function LessonBookSheet({ coach, onClose }) {
+  const today = new Date();
+  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const [date, setDate] = React.useState(fmt(today));
+  const [hour, setHour] = React.useState(14);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  async function submit() {
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('coach_id', coach.id);
+      fd.append('lesson_date', date);
+      fd.append('start_hour', String(hour));
+      const res = await fetch('/api/lessons', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`레슨 예약 신청 완료 (${data.code})`);
+        onClose();
+      } else {
+        alert('실패: ' + (data.error || res.status));
+      }
+    } catch (e) {
+      alert('네트워크 오류: ' + e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 10, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: "20px 20px 0 0", padding: "16px 16px 24px" }}>
+        <div style={{ width: 36, height: 4, background: "var(--gray-200)", borderRadius: 2, margin: "0 auto 14px" }}/>
+        <div className="row" style={{ marginBottom: 16 }}>
+          <Photo src={coach.img} radius={999} style={{ width: 48, height: 48, flexShrink: 0 }}/>
+          <div style={{ marginLeft: 12, flex: 1 }}>
+            <div className="fw-700">{coach.name} 레슨 예약</div>
+            <div className="text-sub" style={{ fontSize: 12 }}>{won(coach.price)} / {coach.duration_min}분</div>
+          </div>
+          <button type="button" onClick={onClose} style={{ background: "none", border: "none", padding: 4 }}>{I.close(22)}</button>
+        </div>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 12 }}>날짜
+          <input type="date" value={date} min={fmt(today)} onChange={e => setDate(e.target.value)} style={{ height: 44, padding: "0 12px", borderRadius: 10, border: "1px solid var(--line-strong)", fontSize: 14 }}/>
+        </label>
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 16 }}>시작 시각
+          <select value={hour} onChange={e => setHour(parseInt(e.target.value, 10))} style={{ height: 44, padding: "0 12px", borderRadius: 10, border: "1px solid var(--line-strong)", fontSize: 14 }}>
+            {Array.from({length: 14}, (_, i) => i + 9).map(h => <option key={h} value={h}>{String(h).padStart(2,'0')}:00</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={submitting} onClick={submit} className="btn btn-primary btn-lg btn-block">
+          {submitting ? '신청 중...' : '레슨 예약 신청'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { U3Detail, U4ReserveSheet, LessonBookSheet, makeWeek });

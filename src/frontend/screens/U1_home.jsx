@@ -45,7 +45,8 @@ function TimeChips({ selected = "now", onSelect }) {
         <button
           key={o.id}
           type="button"
-          className={"chip" + (selected === o.id ? (o.brand ? " brand" : " active") : "")}
+          className={"chip chip-time" + (selected === o.id ? (o.brand ? " brand" : " active") : "")}
+          data-time-range={o.id}
           onClick={() => onSelect && onSelect(o.id)}
           style={{ flexShrink: 0 }}
         >
@@ -218,7 +219,7 @@ function HomeMapFirst({ dense = false, onVenue, ...headerProps }) {
           <div className="section-sub">반경 2km · 5곳</div>
         </div>
         <div className="spacer" />
-        <button type="button" className="btn btn-sm btn-line">정렬 ↓</button>
+        <button type="button" onClick={() => window.location.href = '/venues'} className="btn btn-sm btn-line">전체 보기</button>
       </div>
       {venues.map(v => <VenueRow key={v.id} v={v} dense={dense} onClick={() => onVenue && onVenue(v.id)} />)}
       <div style={{ height: 24 }} />
@@ -235,17 +236,17 @@ function HomeListFirst({ dense = false, onVenue, ...headerProps }) {
       <TimeChips />
       <div style={{ padding: "0 16px 16px" }}>
         <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
-          <button type="button" className="chip">{I.filter(14)} 필터</button>
-          <button type="button" className="chip">거리순 ↓</button>
-          <button type="button" className="chip">3만원 이하</button>
-          <button type="button" className="chip">주차가능</button>
-          <button type="button" className="chip">샤워실</button>
+          <button type="button" className="chip chip-filter" data-filter="more"      onClick={() => alert('상세 필터 — v2에서 제공됩니다')}>{I.filter(14)} 필터</button>
+          <button type="button" className="chip chip-filter" data-filter="distance"  onClick={() => window.location.href = '/venues?sort=distance'}>거리순 ↓</button>
+          <button type="button" className="chip chip-filter" data-filter="under30k"  onClick={() => window.location.href = '/venues?max_price=30000'}>3만원 이하</button>
+          <button type="button" className="chip chip-filter" data-filter="parking"   onClick={() => window.location.href = '/venues?tag=parking'}>주차가능</button>
+          <button type="button" className="chip chip-filter" data-filter="shower"    onClick={() => window.location.href = '/venues?tag=shower'}>샤워실</button>
         </div>
       </div>
       <div className="row" style={{ padding: "0 16px 8px" }}>
         <div className="fw-700" style={{ fontSize: 15 }}>지금 비어있는 코트 <span className="text-brand">{venues.length}</span></div>
         <div className="spacer" />
-        <button type="button" className="btn btn-sm btn-line">{I.map(14)} 지도</button>
+        <button type="button" onClick={() => alert('지도 보기 — 외부 지도 SDK 연동 후 v2 에서 제공')} className="btn btn-sm btn-line">{I.map(14)} 지도</button>
       </div>
       {venues.map(v => <VenueRow key={v.id} v={v} dense={dense} onClick={() => onVenue && onVenue(v.id)} />)}
       <div style={{ height: 24 }} />
@@ -283,7 +284,7 @@ function HomeDealFirst({ dense = false, onVenue, ...headerProps }) {
       <div style={{ padding: "16px 16px 8px" }} className="row">
         <div className="section-title">내 동네 추천</div>
         <div className="spacer" />
-        <button type="button" className="btn btn-sm btn-ghost">전체 보기 {I.chevR(14, "var(--brand-500)")}</button>
+        <button type="button" onClick={() => window.location.href = '/venues'} className="btn btn-sm btn-ghost">전체 보기 {I.chevR(14, "var(--brand-500)")}</button>
       </div>
       {others.map(v => <VenueRow key={v.id} v={v} dense={dense} onClick={() => onVenue && onVenue(v.id)} />)}
       <div style={{ height: 24 }} />

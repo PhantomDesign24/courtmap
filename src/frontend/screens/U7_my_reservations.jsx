@@ -21,7 +21,7 @@ function U7MyReservations({ onBack, onVenue, onEntry, onReservation, onCreateRec
         <div className="row" style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.5px" }}>내 예약</div>
           <div className="spacer"/>
-          <button type="button" style={{ background: "none", border: "none", padding: 6 }}>
+          <button type="button" onClick={() => alert('캘린더 뷰 — v2 에서 제공')} style={{ background: "none", border: "none", padding: 6 }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.8"/>
               <path d="M4 9h16M9 3v4M15 3v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>

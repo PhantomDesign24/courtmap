@@ -13,13 +13,40 @@ final class VenueController extends Controller
 {
     public function index(): void
     {
-        $venues = VenueQueries::listForCards();
+        $q   = trim((string) ($_GET['q']   ?? ''));
+        $tag = trim((string) ($_GET['tag'] ?? ''));
+        $max = (int) ($_GET['max_price'] ?? 0);
+
+        if ($q || $tag || $max) {
+            // 통합 검색 API 와 동일한 필터 사용
+            $sql = 'SELECT v.id FROM venues v ';
+            $where = ['v.status = "active"'];
+            $params = [];
+            if ($tag) {
+                $sql .= 'JOIN venue_facility_tags vft ON vft.venue_id = v.id JOIN facility_tags ft ON ft.id = vft.tag_id AND ft.code = ? ';
+                array_unshift($params, $tag);
+            }
+            if ($q) {
+                $where[] = '(v.name LIKE ? OR v.area LIKE ?)';
+                array_push($params, "%$q%", "%$q%");
+            }
+            if ($max) {
+                $where[] = 'v.price_per_hour <= ?';
+                $params[] = $max;
+            }
+            $sql .= 'WHERE ' . implode(' AND ', $where) . ' ORDER BY v.id ASC';
+            $okIds = array_map(static fn($r) => (int) $r['id'], Db::fetchAll($sql, $params));
+            $venues = array_values(array_filter(VenueQueries::listForCards(), static fn($v) => in_array($v['id'], $okIds, true)));
+        } else {
+            $venues = VenueQueries::listForCards();
+        }
+
         $this->view('app', [
             'title'  => '구장 찾기 — 코트맵',
             'screen' => 'venues_list',
             'data'   => [
                 'venues'   => $venues,
-                'location' => '강남구 역삼동',
+                'location' => $_SESSION['user_area'] ?? '강남구 역삼동',
             ],
         ], layout: null);
     }

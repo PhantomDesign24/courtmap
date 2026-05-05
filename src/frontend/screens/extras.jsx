@@ -51,7 +51,22 @@ function LocationSheet({ onClose, onPick, current = "강남구 역삼동" }) {
 
         {/* GPS 버튼 */}
         <div style={{ padding: "0 16px 8px" }}>
-          <button type="button" style={{
+          <button type="button" onClick={() => {
+            if (!navigator.geolocation) { alert('이 브라우저는 위치 정보를 지원하지 않습니다.'); return; }
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+              const { latitude, longitude } = pos.coords;
+              try {
+                // 좌표 → 한국 행정동 역지오코딩 (Nominatim 무료, 키 불필요)
+                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&accept-language=ko`);
+                const j = await r.json();
+                const a = j.address || {};
+                const area = [a.city || a.county, a.borough || a.suburb, a.quarter || a.neighbourhood].filter(Boolean).join(' ').trim() || '현재 위치';
+                onPick && onPick(area);
+              } catch (e) {
+                onPick && onPick('현재 위치');
+              }
+            }, () => alert('위치 권한이 거부되었습니다.'));
+          }} style={{
             width: "100%", display: "flex", alignItems: "center", gap: 10,
             background: "var(--brand-50)", border: "none", borderRadius: 12,
             padding: "12px 14px", textAlign: "left", cursor: "pointer",
@@ -61,7 +76,7 @@ function LocationSheet({ onClose, onPick, current = "강남구 역삼동" }) {
             </div>
             <div style={{ flex: 1 }}>
               <div className="fw-700" style={{ fontSize: 13.5, color: "var(--brand-700)" }}>현재 위치로 설정</div>
-              <div style={{ fontSize: 11.5, color: "var(--brand-700)", opacity: 0.75 }}>GPS · 정확도 ±20m</div>
+              <div style={{ fontSize: 11.5, color: "var(--brand-700)", opacity: 0.75 }}>GPS · OpenStreetMap 역지오코딩</div>
             </div>
           </button>
         </div>
@@ -438,9 +453,9 @@ function EntryGuide({ onBack, reservation }) {
           <div className="card" style={{ padding: 16, marginBottom: 10 }}>
             <div className="fw-700" style={{ fontSize: 14, marginBottom: 12 }}>입장 절차</div>
             {[
-              { n: "1", t: "예약 5분 전 도착",        d: "B2층 프론트로 와주세요" },
-              { n: "2", t: "예약번호 또는 이름 알리기", d: '"코트맵 박지훈"이라고 하시면 됩니다' },
-              { n: "3", t: "코트 키 받기",             d: "본인 인증 후 A코트 키를 드려요" },
+              { n: "1", t: "예약 5분 전 도착",        d: "프론트로 와주세요" },
+              { n: "2", t: "예약번호 또는 이름 알리기", d: `"코트맵 ${r.name}" 이라고 하시면 됩니다` },
+              { n: "3", t: "코트 키 받기",             d: `본인 인증 후 ${r.court || ''} 키를 드려요` },
               { n: "4", t: "이용 후 키 반납",          d: "퇴장 시 프론트에 반납해주세요" },
             ].map((s, i) => (
               <div key={i} className="row gap-12" style={{ alignItems: "flex-start", marginBottom: i === 3 ? 0 : 12 }}>
@@ -549,7 +564,11 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
         <button type="button" onClick={onBack} style={{ background:"none", border:"none", padding: 6 }}>{I.back(22)}</button>
         <div className="fw-700" style={{ fontSize: 16, marginLeft: 4 }}>예약 상세</div>
         <div className="spacer"/>
-        <button type="button" style={{ background: "none", border: "none", padding: 6 }}>
+        <button type="button" onClick={async () => {
+          const url = window.location.href;
+          const title = `[코트맵] ${v?.name || ''} 예약`;
+          try { if (navigator.share) await navigator.share({ title, url }); else { await navigator.clipboard.writeText(url); alert('링크가 복사되었습니다.'); } } catch (e) {}
+        }} style={{ background: "none", border: "none", padding: 6 }}>
           {I.share(20, "var(--text-sub)")}
         </button>
       </div>
@@ -596,12 +615,14 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
             <div className="row" style={{ marginBottom: 8 }}>
               <span className="text-sub" style={{ fontSize: 12 }}>예약번호</span>
               <div className="spacer"/>
-              <button type="button" className="btn btn-sm btn-line" style={{ height: 28, padding: "0 10px", fontSize: 11.5 }}>
+              <button type="button" onClick={async () => {
+                try { await navigator.clipboard.writeText(r.code || ''); alert('예약번호가 복사되었습니다.'); } catch (e) {}
+              }} className="btn btn-sm btn-line" style={{ height: 28, padding: "0 10px", fontSize: 11.5 }}>
                 {I.copy(11)} 복사
               </button>
             </div>
             <div className="fw-700 num" style={{ fontSize: 16, letterSpacing: "0.3px" }}>
-              CMAP-2026-{r.id ? r.id.toUpperCase().padStart(5,"0") : "5J7K2"}
+              {r.code || '—'}
             </div>
           </div>
 
@@ -647,7 +668,7 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
             <div className="row" style={{ fontSize: 12, color: "var(--text-sub)" }}>
               <span>결제 수단</span>
               <div className="spacer"/>
-              <span>무통장입금 · 신한 110-432-589021</span>
+              <span>무통장입금{r.bank ? ` · ${r.bank.name} ${r.bank.account}` : ''}</span>
             </div>
           </div>
 
@@ -672,7 +693,7 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
               <div className="fw-700" style={{ fontSize: 13.5 }}>운영자에게 문의</div>
               <div className="text-sub" style={{ fontSize: 11.5 }}>{v && v.phone ? v.phone : '연락처 미등록'}</div>
             </div>
-            <button type="button" className="btn btn-sm btn-line" style={{ height: 32 }}>채팅</button>
+            <a href={v && v.phone ? `tel:${v.phone}` : '#'} onClick={(e) => { if (!(v && v.phone)) { e.preventDefault(); alert('전화번호 미등록'); } }} className="btn btn-sm btn-line" style={{ height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>전화</a>
           </div>
 
           {/* 지난 예약 — 다시 예약/리뷰 */}
@@ -684,7 +705,7 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
                   <span key={n} style={{ fontSize: 22, color: "var(--gold-500)", marginRight: 4 }}>★</span>
                 ))}
               </div>
-              <button type="button" className="btn btn-primary btn-md btn-block">리뷰 작성하고 500P 받기</button>
+              <button type="button" onClick={() => alert('리뷰 시스템은 v2에서 제공됩니다')} className="btn btn-primary btn-md btn-block">리뷰 작성하고 500P 받기</button>
             </div>
           )}
 
