@@ -57,19 +57,16 @@ final class ReservationService
 
         if ($date < date('Y-m-d')) throw new \RuntimeException('과거 날짜는 예약할 수 없습니다');
 
-        // 슬롯 충돌 체크 (모든 코트)
+        // 슬롯 단위·운영시간 검증 (M-2)
+        $slotData = SlotService::forDate($venueId, $date);
+        if (!empty($slotData['is_closed']))                      throw new \RuntimeException('휴무일입니다');
+        if ((int) $slotData['slot_unit'] !== $duration)          throw new \RuntimeException('이 날 슬롯 단위는 ' . $slotData['slot_unit'] . '시간입니다');
+        $hourMatch = false;
+        foreach ($slotData['slots'] as $s) if ((int) $s['hour'] === $startH) { $hourMatch = true; break; }
+        if (!$hourMatch) throw new \RuntimeException('운영 시간 외이거나 잘못된 시작 시각');
+
         $endH = $startH + $duration;
-        foreach ($courtIds as $cid) {
-            $conflict = Db::fetch(
-                'SELECT id FROM reservations
-                 WHERE court_id = ? AND reservation_date = ?
-                   AND status IN ("pending", "confirmed")
-                   AND start_hour < ? AND (start_hour + duration_hours) > ?
-                 LIMIT 1',
-                [$cid, $date, $endH, $startH]
-            );
-            if ($conflict) throw new \RuntimeException('이미 예약된 시간입니다 (코트 ' . $cid . ')');
-        }
+        // 충돌 체크는 트랜잭션 내부 + 코트 행 잠금 (C-2 race condition 방지)
 
         // 가격 계산 (모든 코트 합산)
         $basePerHourSum    = 0;
@@ -126,10 +123,27 @@ final class ReservationService
         foreach ($courts as $c) $courtPriceMap[(int)$c['id']] = (int) $c['price'];
 
         return Db::transaction(function () use (
-            $userId, $venueId, $courtIds, $courtPriceMap, $date, $startH, $duration,
+            $userId, $venueId, $courtIds, $courtPriceMap, $date, $startH, $duration, $endH,
             $basePriceOriginal, $dpDiscount, $extras, $total,
             $depositor, $depositDue, $dpId, $equipment, $isBulk, $bulkGroup
         ) {
+            // 코트 행 비관적 잠금 — 동시 INSERT 방지 (C-2)
+            foreach ($courtIds as $cid) {
+                Db::query('SELECT id FROM courts WHERE id = ? FOR UPDATE', [$cid]);
+            }
+            // 잠금 안에서 충돌 재확인
+            foreach ($courtIds as $cid) {
+                $conflict = Db::fetch(
+                    'SELECT id FROM reservations
+                     WHERE court_id = ? AND reservation_date = ?
+                       AND status IN ("pending", "confirmed")
+                       AND start_hour < ? AND (start_hour + duration_hours) > ?
+                     LIMIT 1',
+                    [$cid, $date, $endH, $startH]
+                );
+                if ($conflict) throw new \RuntimeException('이미 예약된 시간입니다 (코트 ' . $cid . ')');
+            }
+
             $ids = [];
             $firstCode = null;
             foreach ($courtIds as $cid) {

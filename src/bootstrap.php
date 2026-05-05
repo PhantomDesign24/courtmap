@@ -36,14 +36,11 @@ $db   = require $root . '/config/database.php';
 
 date_default_timezone_set($app['timezone']);
 
-if ($app['debug']) {
-    ini_set('display_errors', '1');
-    ini_set('display_startup_errors', '1');
-    error_reporting(E_ALL);
-} else {
-    ini_set('display_errors', '0');
-    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
-}
+// production 환경에선 debug 가 켜져있어도 화면 노출 금지
+$showErrors = $app['debug'] && $app['env'] !== 'production';
+ini_set('display_errors', $showErrors ? '1' : '0');
+ini_set('display_startup_errors', $showErrors ? '1' : '0');
+error_reporting($showErrors ? E_ALL : (E_ALL & ~E_DEPRECATED & ~E_STRICT));
 
 \App\Core\Db::init($db);
 

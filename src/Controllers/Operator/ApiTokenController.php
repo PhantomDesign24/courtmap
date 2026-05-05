@@ -31,7 +31,8 @@ final class ApiTokenController extends Controller
             $venueIds
         ) : [];
 
-        $newToken = $_GET['new_token'] ?? null;
+        $newToken = $_SESSION['new_token_flash'] ?? null;
+        unset($_SESSION['new_token_flash']);
 
         $this->view('operator/api_tokens', [
             'title'    => 'API 연동 — 운영자',
@@ -50,13 +51,15 @@ final class ApiTokenController extends Controller
         $this->ensureOwn($venueId, (int) $user['id']);
         $token = 'cmap_' . bin2hex(random_bytes(20));
         Db::insert('api_tokens', [
-            'venue_id' => $venueId,
-            'token'    => $token,
-            'name'     => trim((string) $_POST['name']),
-            'scopes'   => trim((string) ($_POST['scopes'] ?? 'reservations:read')),
-            'status'   => 'active',
+            'venue_id'   => $venueId,
+            'token'      => substr($token, 0, 12) . '…',          // 표시용 prefix 만 저장
+            'token_hash' => hash('sha256', $token),                // 실제 매칭은 hash 로
+            'name'       => trim((string) $_POST['name']),
+            'scopes'     => trim((string) ($_POST['scopes'] ?? 'reservations:read')),
+            'status'     => 'active',
         ]);
-        $this->redirect('/operator/api?new_token=' . urlencode($token));
+        $_SESSION['new_token_flash'] = $token;
+        $this->redirect('/operator/api');
     }
 
     public function revokeToken(string $id): void
@@ -74,10 +77,18 @@ final class ApiTokenController extends Controller
         $user = $this->requireAuth('operator');
         $venueId = (int) $_POST['venue_id'];
         $this->ensureOwn($venueId, (int) $user['id']);
+
+        $url = trim((string) $_POST['url']);
+        $check = \App\Core\SsrfGuard::check($url);
+        if (!$check['ok']) {
+            // 간단히 메시지 + 리다이렉트 (실제로는 alert/flash 가 더 좋음)
+            \App\Core\Response::html('<h1>Webhook URL 거부</h1><p>' . htmlspecialchars($check['reason']) . '</p><p><a href="/operator/api">돌아가기</a></p>', 400);
+        }
+
         Db::insert('webhooks', [
             'venue_id'   => $venueId,
             'event_type' => (string) ($_POST['event_type'] ?? 'reservation.confirmed'),
-            'url'        => trim((string) $_POST['url']),
+            'url'        => $url,
             'secret'     => bin2hex(random_bytes(20)),
             'status'     => 'active',
         ]);

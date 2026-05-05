@@ -25,16 +25,9 @@ $e = static fn(?string $s): string => View::e($s);
       <label>예금주<input type="text" name="refund_bank_holder" required value="<?= $e($old['holder'] ?? '') ?>"></label>
     </fieldset>
 
-    <fieldset class="bank-block">
-      <legend>가입 유형</legend>
-      <label style="flex-direction:row;align-items:center;gap:8px;cursor:pointer">
-        <input type="radio" name="role" value="user" checked> 일반 사용자 (예약)
-      </label>
-      <label style="flex-direction:row;align-items:center;gap:8px;cursor:pointer">
-        <input type="radio" name="role" value="operator"> 구장 운영자 (가입 후 구장 등록 가능)
-      </label>
-    </fieldset>
-
+    <p class="text-sub" style="font-size:12px;margin:8px 0 4px">
+      구장 운영자 가입은 별도 절차가 필요합니다. <a href="/support">고객센터로 문의</a> 해주세요.
+    </p>
     <button type="submit" class="btn btn-primary btn-block">가입하기</button>
   </form>
   <p class="auth-link"><a href="/login">이미 계정이 있어요</a></p>

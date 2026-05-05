@@ -29,28 +29,34 @@ final class LessonController extends Controller
         if ($hour < 0 || $hour > 23) Response::json(['error' => 'start_hour 0~23'], 400);
         if ($date < date('Y-m-d')) Response::json(['error' => '과거 날짜는 예약 불가'], 400);
 
-        // 같은 강사 같은 날짜·시간 활성 예약 있으면 거부 (단순)
-        $conflict = Db::fetch(
-            'SELECT id FROM lesson_reservations
-             WHERE coach_id = ? AND lesson_date = ? AND start_hour = ?
-               AND status IN ("pending","confirmed")
-             LIMIT 1',
-            [$coachId, $date, $hour]
-        );
-        if ($conflict) Response::json(['error' => '이미 예약된 시간입니다.'], 409);
-
+        // 충돌 체크 + INSERT 를 한 트랜잭션 + 강사 행 잠금 (M-3 race 방지)
         $code = 'LSN-' . date('Y') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
-        $id = Db::insert('lesson_reservations', [
-            'code'         => $code,
-            'user_id'      => (int) $user['id'],
-            'coach_id'     => $coachId,
-            'venue_id'     => (int) $coach['venue_id'],
-            'lesson_date'  => $date,
-            'start_hour'   => $hour,
-            'duration_min' => (int) $coach['duration_min'],
-            'price'        => (int) $coach['price_per_lesson'],
-            'status'       => 'pending',
-        ]);
+        try {
+            $id = Db::transaction(function () use ($coachId, $date, $hour, $coach, $user, $code) {
+                Db::query('SELECT id FROM coaches WHERE id = ? FOR UPDATE', [$coachId]);
+                $conflict = Db::fetch(
+                    'SELECT id FROM lesson_reservations
+                     WHERE coach_id = ? AND lesson_date = ? AND start_hour = ?
+                       AND status IN ("pending","confirmed")
+                     LIMIT 1',
+                    [$coachId, $date, $hour]
+                );
+                if ($conflict) throw new \RuntimeException('이미 예약된 시간입니다.');
+                return Db::insert('lesson_reservations', [
+                    'code'         => $code,
+                    'user_id'      => (int) $user['id'],
+                    'coach_id'     => $coachId,
+                    'venue_id'     => (int) $coach['venue_id'],
+                    'lesson_date'  => $date,
+                    'start_hour'   => $hour,
+                    'duration_min' => (int) $coach['duration_min'],
+                    'price'        => (int) $coach['price_per_lesson'],
+                    'status'       => 'pending',
+                ]);
+            });
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 409);
+        }
         Db::insert('notifications', [
             'user_id'      => (int) $user['id'],
             'type'         => 'system',

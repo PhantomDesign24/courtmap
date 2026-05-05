@@ -15,15 +15,18 @@ final class CalendarController extends Controller
     public function venue(string $id): void
     {
         $venueId = (int) $id;
-        $venue = Db::fetch('SELECT id, name FROM venues WHERE id = ? AND status = "active"', [$venueId]);
+        $token   = (string) ($_GET['token'] ?? '');
+        $venue = Db::fetch('SELECT id, name, calendar_token FROM venues WHERE id = ? AND status = "active"', [$venueId]);
         if (!$venue) { http_response_code(404); echo 'not found'; exit; }
+        if ($token === '' || !hash_equals((string) $venue['calendar_token'], $token)) {
+            http_response_code(401); echo 'invalid token'; exit;
+        }
 
         $rows = Db::fetchAll(
             'SELECT r.code, r.reservation_date, r.start_hour, r.duration_hours, r.status,
-                    c.name AS court_name, u.name AS user_name
+                    c.name AS court_name
              FROM reservations r
              JOIN courts c ON c.id = r.court_id
-             JOIN users  u ON u.id = r.user_id
              WHERE r.venue_id = ? AND r.status IN ("confirmed", "done")
                AND r.reservation_date >= CURDATE() - INTERVAL 30 DAY
              ORDER BY r.reservation_date, r.start_hour',
@@ -51,8 +54,8 @@ final class CalendarController extends Controller
             $lines[] = 'DTSTAMP:' . gmdate('Ymd\THis\Z');
             $lines[] = 'DTSTART;TZID=Asia/Seoul:' . $start;
             $lines[] = 'DTEND;TZID=Asia/Seoul:' . $end;
-            $lines[] = 'SUMMARY:' . self::esc('[' . $r['court_name'] . '] ' . $r['user_name']);
-            $lines[] = 'DESCRIPTION:' . self::esc('예약번호 ' . $r['code'] . ' · 상태 ' . $r['status']);
+            $lines[] = 'SUMMARY:' . self::esc($r['court_name'] . ' 예약');
+            $lines[] = 'DESCRIPTION:' . self::esc('상태 ' . $r['status']);
             $lines[] = 'END:VEVENT';
         }
         $lines[] = 'END:VCALENDAR';

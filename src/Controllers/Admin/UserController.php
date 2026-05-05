@@ -61,4 +61,15 @@ final class UserController extends Controller
         Db::query('UPDATE users SET restricted_until = NULL WHERE id = ? AND trust_score >= 60', [(int) $u['id']]);
         $this->redirect('/admin/users');
     }
+
+    public function changeRole(string $id): void
+    {
+        $this->requireAuth('admin');
+        $u = Db::fetch('SELECT id FROM users WHERE id = ?', [(int) $id]);
+        if (!$u) Response::notFound();
+        $role = (string) ($_POST['role'] ?? 'user');
+        if (!in_array($role, ['user', 'operator', 'admin'], true)) Response::redirect('/admin/users');
+        Db::query('UPDATE users SET role = ? WHERE id = ?', [$role, (int) $u['id']]);
+        $this->redirect('/admin/users');
+    }
 }

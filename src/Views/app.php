@@ -35,7 +35,7 @@ $jsonld = $jsonld ?? null;
 <meta name="twitter:description" content="<?= $e($desc) ?>">
 <meta name="twitter:image" content="<?= $e($ogImage) ?>">
 <?php if ($jsonld): ?>
-<script type="application/ld+json"><?= json_encode($jsonld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+<script type="application/ld+json"><?= json_encode($jsonld, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <?php endif; ?>
 <link rel="stylesheet" href="/assets/css/tokens.css">
 <style>
@@ -96,9 +96,10 @@ $jsonld = $jsonld ?? null;
 <body>
 
 <script>
-window.__DATA__   = <?= json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.__DATA__   = <?= json_encode($data, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 window.__SCREEN__ = <?= json_encode($screen, JSON_UNESCAPED_UNICODE) ?>;
-window.__USER__   = <?= json_encode(\App\Core\Auth::user(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.__USER__   = <?= json_encode(\App\Core\Auth::user(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+window.__CSRF__   = <?= json_encode(\App\Core\Csrf::token(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
 
 <div class="stage">

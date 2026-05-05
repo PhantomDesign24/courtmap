@@ -76,6 +76,12 @@ final class RecurringController extends Controller
                     $skipped++;
                 }
             }
+
+            // M-4: 한 건도 성공 못했으면 group 도 canceled 처리 (orphan 방지)
+            if ($created === 0) {
+                Db::query('UPDATE recurring_groups SET status = "canceled" WHERE id = ?', [$groupId]);
+                Response::html('<h1>정기 예약 실패</h1><p>모든 회차가 충돌되어 신청되지 않았습니다.</p><p><a href="/recurring/new">다시 시도</a></p>', 409);
+            }
             $this->redirect('/me/reservations?recurring=' . $created . ($skipped > 0 ? '&skipped=' . $skipped : ''));
         } catch (\Throwable $e) {
             Response::html('<h1>실패</h1><p>' . htmlspecialchars($e->getMessage()) . '</p>', 400);

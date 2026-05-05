@@ -132,10 +132,13 @@ $e = static fn(?string $s): string => View::e($s);
 <section class="op-card">
   <div class="op-card-head"><h2>iCal 피드</h2></div>
   <div style="padding: 16px 18px; font-size: 13px; line-height: 1.7; color: var(--text-sub);">
-    <?php foreach ($venues as $v): ?>
+    <?php
+    // 토큰 표시는 운영자가 자기 구장에 한정
+    $myVenuesWithTokens = \App\Core\Db::fetchAll('SELECT id, name, calendar_token FROM venues WHERE owner_id = ? AND status = "active"', [(int) $user['id']]);
+    foreach ($myVenuesWithTokens as $v): ?>
       <div style="margin-bottom: 6px;">
         <strong style="color: var(--text);"><?= $e($v['name']) ?></strong>:
-        <span style="font-family: monospace; font-size: 12px;">https://bad.mvc.kr/api/venues/<?= (int)$v['id'] ?>/calendar.ics</span>
+        <span style="font-family: monospace; font-size: 12px;">https://bad.mvc.kr/api/venues/<?= (int)$v['id'] ?>/calendar.ics?token=<?= $e($v['calendar_token']) ?></span>
       </div>
     <?php endforeach; ?>
     <div class="op-mute" style="margin-top: 8px;">Google Calendar / iPhone 캘린더에 URL 추가하면 확정 예약이 자동 동기화됩니다.</div>

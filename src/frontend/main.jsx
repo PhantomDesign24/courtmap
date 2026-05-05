@@ -13,6 +13,22 @@ import './screens/extras.jsx';
 import './screens/profile.jsx';
 
 // 전역에서 가져오기 (JSX <Mobile/> 등으로 사용하기 위함)
+// 모든 non-GET fetch 에 CSRF 토큰 자동 주입
+(function patchFetch() {
+  const orig = window.fetch.bind(window);
+  window.fetch = (input, init = {}) => {
+    const method = (init.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      const headers = new Headers(init.headers || {});
+      if (window.__CSRF__ && !headers.has('X-CSRF-Token')) {
+        headers.set('X-CSRF-Token', window.__CSRF__);
+      }
+      init = { ...init, headers, credentials: init.credentials || 'same-origin' };
+    }
+    return orig(input, init);
+  };
+})();
+
 const {
   Mobile, VENUES,
   HomeDealFirst, HomeListFirst,

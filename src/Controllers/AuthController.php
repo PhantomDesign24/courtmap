@@ -28,7 +28,7 @@ final class AuthController extends Controller
         $bank    = trim((string) $this->input('refund_bank_name', ''));
         $acct    = trim((string) $this->input('refund_bank_account', ''));
         $holder  = trim((string) $this->input('refund_bank_holder', ''));
-        $isOp    = (string) $this->input('role', '') === 'operator';
+        // 운영자 권한은 공개 가입에서 부여하지 않음. 관리자가 /admin/users 에서 변경.
 
         $errors = [];
         if (!filter_var($email, FILTER_VALIDATE_EMAIL))                $errors[] = '이메일 형식이 올바르지 않습니다.';
@@ -56,7 +56,7 @@ final class AuthController extends Controller
             'phone'               => $phone,
             'name'                => $name,
             'password_hash'       => password_hash($pass, PASSWORD_BCRYPT),
-            'role'                => $isOp ? 'operator' : 'user',
+            'role'                => 'user',
             'depositor_name'      => $name,
             'refund_bank_name'    => $bank,
             'refund_bank_account' => $acct,
@@ -64,7 +64,7 @@ final class AuthController extends Controller
         ]);
 
         Auth::login($userId);
-        $this->redirect($isOp ? '/operator' : '/me');
+        $this->redirect('/me');
     }
 
     // ─── Login ───────────────────────────────────────────────

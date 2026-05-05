@@ -27,6 +27,12 @@ final class WebhookService
         ], JSON_UNESCAPED_UNICODE);
 
         foreach ($hooks as $h) {
+            // 발사 직전 SSRF 재검증 (DNS 변경·등록 후 차단 정책 변경 대비)
+            $check = \App\Core\SsrfGuard::check((string) $h['url']);
+            if (!$check['ok']) {
+                Db::query('UPDATE webhooks SET status = "failed", failure_count = failure_count + 1, last_failure_at = NOW() WHERE id = ?', [(int) $h['id']]);
+                continue;
+            }
             $sig = hash_hmac('sha256', $body, $h['secret']);
             $ch  = curl_init($h['url']);
             curl_setopt_array($ch, [
@@ -40,6 +46,8 @@ final class WebhookService
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT        => 5,
                 CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_FOLLOWLOCATION => false,  // 리다이렉트 차단 (재검증 비용)
+                CURLOPT_PROTOCOLS      => CURLPROTO_HTTPS,
             ]);
             curl_exec($ch);
             $http = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);

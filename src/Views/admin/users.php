@@ -37,7 +37,16 @@ $role_label = ['user' => '일반', 'operator' => '운영자', 'admin' => '관리
               <div class="fw-600"><?= $e($u['name']) ?></div>
               <div class="op-mute"><?= $e($u['email']) ?> · <?= $e($u['phone']) ?></div>
             </td>
-            <td><span class="badge badge-soft"><?= $e($role_label[$u['role']] ?? $u['role']) ?></span></td>
+            <td>
+              <form method="post" action="/admin/users/<?= (int)$u['id'] ?>/role" style="display:flex;gap:4px;align-items:center">
+                <input type="hidden" name="_csrf" value="<?= $e(\App\Core\Csrf::token()) ?>">
+                <select name="role" onchange="this.form.submit()" style="height:26px;padding:0 4px;border:1px solid var(--line-strong);border-radius:6px;font-size:12px">
+                  <?php foreach ($role_label as $k => $v): ?>
+                    <option value="<?= $e($k) ?>" <?= $u['role'] === $k ? 'selected' : '' ?>><?= $e($v) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </form>
+            </td>
             <td>
               <form method="post" action="/admin/users/<?= (int)$u['id'] ?>/score" style="display:flex;gap:4px;align-items:center">
                 <input type="number" name="trust_score" min="0" max="100" value="<?= (int)$u['trust_score'] ?>" style="width:60px;height:28px;padding:0 6px;border:1px solid var(--line-strong);border-radius:6px;font-size:12px">
