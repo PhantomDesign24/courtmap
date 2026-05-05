@@ -95,7 +95,10 @@ final class AuthController extends Controller
             return;
         }
 
-        $user = Db::fetch('SELECT id, password_hash, status FROM users WHERE email = ?', [$email]);
+        // 이메일이 아니면 name 으로도 로그인 허용 (예: admin / operator 같은 짧은 ID)
+        $user = str_contains($email, '@')
+            ? Db::fetch('SELECT id, password_hash, status FROM users WHERE email = ?', [$email])
+            : Db::fetch('SELECT id, password_hash, status FROM users WHERE name = ? OR email = ?', [$email, $email]);
         $ok   = $user && $user['status'] === 'active' && password_verify($pass, $user['password_hash'] ?? '');
 
         if (!$ok) {
