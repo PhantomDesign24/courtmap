@@ -61,7 +61,7 @@ function rel_time(?int $ts): string {
   </div>
 </section>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+<div class="op-grid-2-1" style="margin-bottom: 20px;">
   <section class="op-card" style="margin-bottom:0">
     <div class="op-card-head"><h2>인기 구장 TOP 10</h2></div>
     <?php if (!$topVenues): ?>
@@ -110,7 +110,7 @@ function rel_time(?int $ts): string {
 
 <section class="op-card">
   <div class="op-card-head"><h2>시스템 헬스</h2></div>
-  <div style="padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+  <div class="op-grid-2" style="padding:16px 18px">
     <div>
       <div class="fw-700" style="font-size:13.5px;margin-bottom:10px">Cron 마지막 실행</div>
       <table style="width:100%;font-size:12.5px">

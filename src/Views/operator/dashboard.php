@@ -64,7 +64,7 @@ foreach ($cells as $row) foreach ($row as $v) $maxCnt = max($maxCnt, $v);
   <?php if (!$upcoming): ?>
     <div class="op-empty">예정된 예약이 없습니다.</div>
   <?php else: ?>
-    <div style="padding: 12px 18px 18px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+    <div class="op-week-grid" style="padding: 12px 18px 18px;">
       <?php for ($i = 0; $i < 7; $i++):
         $d = date('Y-m-d', strtotime("+$i days"));
         $list = $byDay[$d] ?? [];

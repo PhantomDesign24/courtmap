@@ -61,7 +61,7 @@ $st_label = ['user'=>'회원','operator'=>'운영자','system'=>'시스템'];
   <?php endif; ?>
 </section>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div class="op-grid-2">
   <section class="op-card" style="margin-bottom:0">
     <div class="op-card-head"><h2>입금 대기 <span class="op-pill"><?= count($pendingDeposits) ?></span></h2></div>
     <?php if (!$pendingDeposits): ?>
