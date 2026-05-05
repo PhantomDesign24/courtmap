@@ -293,8 +293,8 @@ final class VenueController extends Controller
             $_SESSION['flash_err'] = '업로드 실패 (코드 ' . (int) $_FILES['photo']['error'] . ')';
             $this->redirect('/operator/venues/' . $venueId . '#photos');
         }
-        if ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
-            $_SESSION['flash_err'] = '파일은 2MB 이하만 업로드할 수 있어요.';
+        if ($_FILES['photo']['size'] > 5 * 1024 * 1024) {
+            $_SESSION['flash_err'] = '파일은 5MB 이하만 업로드할 수 있어요.';
             $this->redirect('/operator/venues/' . $venueId . '#photos');
         }
 

@@ -104,7 +104,7 @@ $venueId = (int)$venue['id'];
     <form method="post" enctype="multipart/form-data" action="/operator/venues/<?= $venueId ?>/photos" style="padding:14px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required style="font-size:13px">
       <button type="submit" class="btn btn-primary btn-sm">업로드</button>
-      <span class="op-mute" style="font-size:12px">JPG · PNG · WEBP, 최대 2MB · 첫 업로드는 자동으로 대표 사진</span>
+      <span class="op-mute" style="font-size:12px">JPG · PNG · WEBP, 최대 5MB · 첫 업로드는 자동으로 대표 사진</span>
     </form>
   </section>
   <section class="op-card">
