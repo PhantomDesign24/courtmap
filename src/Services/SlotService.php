@@ -39,6 +39,8 @@ final class SlotService
         $openH  = $hours ? (int) substr($hours['open_time'],  0, 2) : 10;
         $closeH = $hours ? (int) substr($hours['close_time'], 0, 2) : 23;
         if ($hours && substr($hours['close_time'], 0, 5) === '23:59') $closeH = 24;
+        // close 가 자정 (00:00) 또는 open 이후 → 24 로 정규화 (자정 = 다음날 00:00)
+        if ($hours && $closeH <= $openH) $closeH = 24;
         // 임시 휴무
         if (Db::fetch('SELECT 1 FROM venue_closures WHERE venue_id = ? AND closed_date = ?', [$venueId, $date])) {
             $isClosed = true;

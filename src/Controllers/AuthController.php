@@ -82,11 +82,11 @@ final class AuthController extends Controller
         $pass  = (string) $this->input('password', '');
         $ip    = $_SERVER['REMOTE_ADDR'] ?? '';
 
-        // brute force 방지 — IP+email 기준 최근 15분 실패 5회 이상이면 잠금
+        // brute force 방지 — DB 기반 (IP+email hash). 쿠키 클리어로 우회 불가
         $key = hash('sha256', $ip . '|' . strtolower($email));
-        $bucket = $_SESSION['login_attempts'][$key] ?? ['count' => 0, 'until' => 0];
-        if ($bucket['until'] > time()) {
-            $remaining = (int) ($bucket['until'] - time());
+        $row = Db::fetch('SELECT fail_count, blocked_until FROM login_attempts WHERE attempt_key = ?', [$key]);
+        if ($row && $row['blocked_until'] && strtotime($row['blocked_until']) > time()) {
+            $remaining = strtotime($row['blocked_until']) - time();
             $this->view('auth/login', [
                 'title'  => '로그인',
                 'errors' => ['시도가 너무 많습니다. ' . ceil($remaining / 60) . '분 뒤에 다시 시도해주세요.'],
@@ -95,17 +95,22 @@ final class AuthController extends Controller
             return;
         }
 
-        // 이메일이 아니면 name 으로도 로그인 허용 (예: admin / operator 같은 짧은 ID)
+        // 이메일이 아니면 name 으로도 로그인 허용
         $user = str_contains($email, '@')
             ? Db::fetch('SELECT id, password_hash, status FROM users WHERE email = ?', [$email])
             : Db::fetch('SELECT id, password_hash, status FROM users WHERE name = ? OR email = ?', [$email, $email]);
         $ok   = $user && $user['status'] === 'active' && password_verify($pass, $user['password_hash'] ?? '');
 
         if (!$ok) {
-            // 실패 카운트 증가 (지수 backoff: 5/10/30/60분)
-            $bucket['count']++;
-            $bucket['until'] = $bucket['count'] >= 5 ? time() + min(3600, 300 * (1 << ($bucket['count'] - 5))) : 0;
-            $_SESSION['login_attempts'][$key] = $bucket;
+            $count = (int) ($row['fail_count'] ?? 0) + 1;
+            $blockedUntil = $count >= 5
+                ? date('Y-m-d H:i:s', time() + min(3600, 300 * (1 << ($count - 5))))
+                : null;
+            Db::query(
+                'INSERT INTO login_attempts (attempt_key, fail_count, blocked_until) VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE fail_count = VALUES(fail_count), blocked_until = VALUES(blocked_until)',
+                [$key, $count, $blockedUntil]
+            );
             $this->view('auth/login', [
                 'title'  => '로그인',
                 'errors' => ['이메일 또는 비밀번호가 올바르지 않습니다.'],
@@ -113,8 +118,7 @@ final class AuthController extends Controller
             ]);
             return;
         }
-        // 성공 시 카운트 초기화
-        unset($_SESSION['login_attempts'][$key]);
+        Db::query('DELETE FROM login_attempts WHERE attempt_key = ?', [$key]);
 
         Auth::login((int) $user['id']);
         $next = (string) ($_GET['next'] ?? '/me');

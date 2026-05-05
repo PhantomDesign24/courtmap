@@ -111,16 +111,29 @@ final class BookingController extends Controller
         [$user, $r] = $this->loadOwn($code);
         if (!in_array($r['status'], ['pending','confirmed'], true)) $this->redirect('/operator/bookings');
 
-        Db::query(
-            'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "operator",
-                                     cancel_reason = ?, updated_at = NOW() WHERE id = ?',
-            [(string) ($_POST['reason'] ?? '운영자 취소'), $r['id']]
-        );
+        $reason = (string) ($_POST['reason'] ?? '운영자 취소');
+        Db::transaction(function () use ($r, $reason) {
+            // bulk_group 이 있으면 모든 형제도 함께 취소
+            if (!empty($r['bulk_group'])) {
+                Db::query(
+                    'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "operator",
+                                             cancel_reason = ?, updated_at = NOW()
+                     WHERE bulk_group = ? AND status IN ("pending","confirmed")',
+                    [$reason, $r['bulk_group']]
+                );
+            } else {
+                Db::query(
+                    'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "operator",
+                                             cancel_reason = ?, updated_at = NOW() WHERE id = ?',
+                    [$reason, $r['id']]
+                );
+            }
+        });
         Db::insert('notifications', [
             'user_id' => (int) $r['user_id'],
             'type'    => 'system',
             'title'   => '예약이 취소되었습니다',
-            'body'    => "예약번호 {$r['code']} · 운영자 취소",
+            'body'    => (!empty($r['bulk_group']) ? '묶음 예약 일괄 취소' : "예약번호 {$r['code']} · 운영자 취소"),
             'related_type' => 'reservation',
             'related_id'   => (int) $r['id'],
         ]);

@@ -59,30 +59,48 @@ final class ReservationController extends Controller
             Response::json(['error' => '취소할 수 없는 상태입니다.'], 400);
         }
 
-        // 환불율 계산: 시작 시각 기준
+        // 환불율 계산
         $startTs = strtotime($r['reservation_date'] . ' ' . sprintf('%02d:00:00', (int) $r['start_hour']));
         $diffH = ($startTs - time()) / 3600;
         $pct = $diffH >= 24 ? (int) $r['refund_24h_pct']
              : ($diffH >= 1 ? (int) $r['refund_1h_pct']
                             : (int) $r['refund_lt1h_pct']);
-        $refund = (int) round((int) $r['total_price'] * $pct / 100);
 
-        \App\Core\Db::query(
-            'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "user",
-                                     cancel_reason = ?, refund_amount = ?, updated_at = NOW()
-             WHERE id = ?',
-            [(string) ($_POST['reason'] ?? '사용자 취소'), $refund, (int) $r['id']]
-        );
+        $reason = (string) ($_POST['reason'] ?? '사용자 취소');
+        // bulk_group 이 있으면 같은 묶음 모두 일괄 취소
+        $totalRefund = \App\Core\Db::transaction(function () use ($r, $pct, $user, $reason) {
+            $rows = !empty($r['bulk_group'])
+                ? \App\Core\Db::fetchAll(
+                    'SELECT id, total_price FROM reservations
+                     WHERE bulk_group = ? AND user_id = ? AND status IN ("pending","confirmed")',
+                    [$r['bulk_group'], (int) $user['id']]
+                )
+                : [['id' => (int) $r['id'], 'total_price' => (int) $r['total_price']]];
+
+            $sum = 0;
+            foreach ($rows as $row) {
+                $rf = (int) round((int) $row['total_price'] * $pct / 100);
+                \App\Core\Db::query(
+                    'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "user",
+                                             cancel_reason = ?, refund_amount = ?, updated_at = NOW()
+                     WHERE id = ? AND status IN ("pending","confirmed")',
+                    [$reason, $rf, (int) $row['id']]
+                );
+                $sum += $rf;
+            }
+            return $sum;
+        });
 
         \App\Core\Db::insert('notifications', [
             'user_id' => (int) $user['id'],
             'type'    => 'system',
             'title'   => '예약이 취소되었습니다',
-            'body'    => "예약번호 {$r['code']} · 환불 {$pct}% (" . number_format($refund) . "원)",
+            'body'    => (!empty($r['bulk_group']) ? '묶음 예약 일괄 취소 · ' : '예약번호 ' . $r['code'] . ' · ')
+                       . "환불 {$pct}% (" . number_format($totalRefund) . "원)",
             'related_type' => 'reservation',
             'related_id'   => (int) $r['id'],
         ]);
 
-        Response::json(['ok' => true, 'refund_amount' => $refund, 'refund_pct' => $pct]);
+        Response::json(['ok' => true, 'refund_amount' => $totalRefund, 'refund_pct' => $pct]);
     }
 }

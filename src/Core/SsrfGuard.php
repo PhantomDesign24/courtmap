@@ -9,7 +9,8 @@ namespace App\Core;
 final class SsrfGuard
 {
     /**
-     * @return array{ok:bool, reason?:string}
+     * @return array{ok:bool, reason?:string, ip?:string}
+     * IP 도 함께 반환 — 호출 측에서 CURLOPT_RESOLVE 로 핀해 DNS rebinding 차단.
      */
     public static function check(string $url): array
     {
@@ -37,7 +38,8 @@ final class SsrfGuard
                 return ['ok' => false, 'reason' => '내부/사설/loopback IP 는 허용되지 않습니다'];
             }
         }
-        return ['ok' => true];
+        // 첫 번째 public IP 를 핀 — curl 의 자체 DNS 해석 회피 (rebinding 방지)
+        return ['ok' => true, 'ip' => $ips[0], 'host' => $host, 'port' => (int) ($p['port'] ?? (strtolower($p['scheme']) === 'https' ? 443 : 80))];
     }
 
     private static function isPrivate(string $ip): bool

@@ -105,6 +105,16 @@ final class ApiTokenController extends Controller
         $this->redirect('/operator/api');
     }
 
+    public function reactivateWebhook(string $id): void
+    {
+        $user = $this->requireAuth('operator');
+        $r = Db::fetch('SELECT w.id, w.venue_id, v.owner_id FROM webhooks w JOIN venues v ON v.id = w.venue_id WHERE w.id = ?', [(int) $id]);
+        if (!$r) Response::notFound();
+        if ((int) $r['owner_id'] !== (int) $user['id']) Response::forbidden();
+        Db::query('UPDATE webhooks SET status = "active", failure_count = 0 WHERE id = ?', [(int) $r['id']]);
+        $this->redirect('/operator/api');
+    }
+
     private function ensureOwn(int $venueId, int $userId): void
     {
         $v = Db::fetch('SELECT owner_id FROM venues WHERE id = ?', [$venueId]);

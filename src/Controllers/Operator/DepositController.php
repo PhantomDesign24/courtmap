@@ -70,12 +70,20 @@ final class DepositController extends Controller
         if ((int) $r['owner_id'] !== (int) $user['id']) Response::forbidden('이 구장의 예약이 아닙니다.');
         if ($r['status'] !== 'pending')        Response::redirect('/operator/deposits');
 
-        Db::query(
-            'UPDATE reservations SET status = "confirmed", paid_at = NOW(), updated_at = NOW() WHERE id = ?',
-            [$r['id']]
-        );
-
         $rFull = Db::fetch('SELECT * FROM reservations WHERE id = ?', [$r['id']]);
+        // bulk_group 이 있으면 같은 묶음 모두 confirmed
+        if (!empty($rFull['bulk_group'])) {
+            Db::query(
+                'UPDATE reservations SET status = "confirmed", paid_at = NOW(), updated_at = NOW()
+                 WHERE bulk_group = ? AND status = "pending"',
+                [$rFull['bulk_group']]
+            );
+        } else {
+            Db::query(
+                'UPDATE reservations SET status = "confirmed", paid_at = NOW(), updated_at = NOW() WHERE id = ?',
+                [$r['id']]
+            );
+        }
         Db::insert('notifications', [
             'user_id'      => (int) $rFull['user_id'],
             'type'         => 'confirm',

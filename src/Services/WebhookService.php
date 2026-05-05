@@ -27,10 +27,11 @@ final class WebhookService
         ], JSON_UNESCAPED_UNICODE);
 
         foreach ($hooks as $h) {
-            // 발사 직전 SSRF 재검증 (DNS 변경·등록 후 차단 정책 변경 대비)
+            // 발사 직전 SSRF 재검증 + IP 핀
             $check = \App\Core\SsrfGuard::check((string) $h['url']);
             if (!$check['ok']) {
-                Db::query('UPDATE webhooks SET status = "failed", failure_count = failure_count + 1, last_failure_at = NOW() WHERE id = ?', [(int) $h['id']]);
+                // HTTP 실패와 동일하게 임계값 누적 (3회) — DNS hiccup 으로 영구 disable 방지
+                self::recordFailure((int) $h['id'], $h['failure_count']);
                 continue;
             }
             $sig = hash_hmac('sha256', $body, $h['secret']);
@@ -46,8 +47,10 @@ final class WebhookService
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT        => 5,
                 CURLOPT_CONNECTTIMEOUT => 3,
-                CURLOPT_FOLLOWLOCATION => false,  // 리다이렉트 차단 (재검증 비용)
+                CURLOPT_FOLLOWLOCATION => false,
                 CURLOPT_PROTOCOLS      => CURLPROTO_HTTPS,
+                // DNS rebinding 차단 — 검증한 IP 로 직접 연결
+                CURLOPT_RESOLVE        => [$check['host'] . ':' . $check['port'] . ':' . $check['ip']],
             ]);
             curl_exec($ch);
             $http = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -57,14 +60,19 @@ final class WebhookService
             if ($http >= 200 && $http < 300) {
                 Db::query('UPDATE webhooks SET last_success_at = NOW(), failure_count = 0 WHERE id = ?', [(int) $h['id']]);
             } else {
-                $newCount = (int) $h['failure_count'] + 1;
-                $newStatus = $newCount >= 3 ? 'failed' : 'active';
-                Db::query(
-                    'UPDATE webhooks SET last_failure_at = NOW(), failure_count = ?, status = ? WHERE id = ?',
-                    [$newCount, $newStatus, (int) $h['id']]
-                );
+                self::recordFailure((int) $h['id'], $h['failure_count']);
                 error_log("webhook fail venue=$venueId event=$eventType http=$http err=$err");
             }
         }
+    }
+
+    private static function recordFailure(int $hookId, int $currentCount): void
+    {
+        $newCount  = $currentCount + 1;
+        $newStatus = $newCount >= 3 ? 'failed' : 'active';
+        Db::query(
+            'UPDATE webhooks SET last_failure_at = NOW(), failure_count = ?, status = ? WHERE id = ?',
+            [$newCount, $newStatus, $hookId]
+        );
     }
 }

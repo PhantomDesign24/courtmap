@@ -105,6 +105,10 @@ $router->get ('/api/venues/{id}/calendar.ics',     [ApiCalendar::class,      've
 $router->get ('/api/venues',                       [ApiVenueList::class,     'index']);
 $router->get ('/api/me/location',                  [ApiMe::class,            'getLocation']);
 $router->post('/api/me/location',                  [ApiMe::class,            'setLocation']);
+
+// 환불계좌 관리 (사용자)
+$router->get ('/me/refund-account',  [\App\Controllers\MeBankController::class, 'form']);
+$router->post('/me/refund-account',  [\App\Controllers\MeBankController::class, 'update']);
 $router->get ('/api/popular/areas',                [ApiMe::class,            'popularAreas']);
 $router->get ('/api/popular/searches',             [ApiMe::class,            'popularSearches']);
 $router->get ('/api/me/unread',                    [ApiMe::class,            'unreadCount']);
@@ -150,6 +154,8 @@ $router->post('/admin/venues/{id}/approve',              [AdVenue::class,     'a
 $router->post('/admin/venues/{id}/reject',               [AdVenue::class,     'reject']);
 $router->post('/admin/venues/{id}/reactivate',           [AdVenue::class,     'reactivate']);
 $router->get ('/admin/users',                            [AdUser::class,      'index']);
+$router->get ('/admin/venues/{id}',                      [AdVenue::class,     'detail']);
+$router->post('/operator/api/webhooks/{id}/reactivate',  [OpApiToken::class,  'reactivateWebhook']);
 $router->post('/admin/users/{id}/suspend',               [AdUser::class,      'suspend']);
 $router->post('/admin/users/{id}/score',                 [AdUser::class,      'adjustScore']);
 $router->post('/admin/users/{id}/role',                  [AdUser::class,      'changeRole']);

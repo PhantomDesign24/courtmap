@@ -25,7 +25,7 @@ $e = static fn(?string $s): string => View::e($s);
       <tbody>
         <?php foreach ($venues as $v): ?>
           <tr>
-            <td class="fw-700"><?= $e($v['name']) ?></td>
+            <td class="fw-700"><a href="/admin/venues/<?= (int)$v['id'] ?>" style="color:var(--text);text-decoration:none"><?= $e($v['name']) ?></a></td>
             <td>
               <?= $e($v['area']) ?>
               <div class="op-mute"><?= $e($v['address']) ?></div>

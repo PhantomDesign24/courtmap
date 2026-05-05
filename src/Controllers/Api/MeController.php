@@ -22,6 +22,7 @@ final class MeController extends Controller
 
     public function setLocation(): void
     {
+        if (!Auth::check()) Response::json(['error' => '로그인이 필요합니다'], 401);
         $body = Request::isJson() ? (Request::json() ?? []) : Request::all();
         $area = trim((string) ($body['area'] ?? ''));
         if ($area === '') Response::json(['error' => 'area required'], 400);

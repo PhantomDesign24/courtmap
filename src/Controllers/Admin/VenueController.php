@@ -76,4 +76,46 @@ final class VenueController extends Controller
         Db::query('UPDATE venues SET status = "active", updated_at = NOW() WHERE id = ?', [(int) $v['id']]);
         $this->redirect('/admin/venues?tab=suspended');
     }
+
+    public function detail(string $id): void
+    {
+        $user = $this->requireAuth('admin');
+        $v = Db::fetch(
+            'SELECT v.*, u.name AS owner_name, u.email AS owner_email, u.phone AS owner_phone
+             FROM venues v JOIN users u ON u.id = v.owner_id WHERE v.id = ?',
+            [(int) $id]
+        );
+        if (!$v) Response::notFound();
+
+        $courts  = Db::fetchAll('SELECT * FROM courts WHERE venue_id = ? ORDER BY sort_order, id', [(int) $id]);
+        $hours   = Db::fetchAll('SELECT * FROM venue_hours WHERE venue_id = ? ORDER BY day_of_week', [(int) $id]);
+        $tags    = Db::fetchAll('SELECT ft.name FROM venue_facility_tags vft JOIN facility_tags ft ON ft.id = vft.tag_id WHERE vft.venue_id = ? ORDER BY ft.sort_order', [(int) $id]);
+        $stats   = Db::fetch(
+            'SELECT
+                (SELECT COUNT(*) FROM reservations WHERE venue_id = ?) AS total_res,
+                (SELECT COUNT(*) FROM reservations WHERE venue_id = ? AND status = "confirmed") AS confirmed_res,
+                (SELECT COUNT(*) FROM reservations WHERE venue_id = ? AND status = "noshow") AS noshow_res,
+                (SELECT COALESCE(SUM(total_price),0) FROM reservations WHERE venue_id = ? AND status IN ("confirmed","done")) AS revenue',
+            [(int) $id, (int) $id, (int) $id, (int) $id]
+        );
+        $recent = Db::fetchAll(
+            'SELECT r.code, r.reservation_date, r.start_hour, r.duration_hours, r.status, r.total_price,
+                    u.name AS user_name, c.name AS court_name
+             FROM reservations r
+             JOIN users u ON u.id = r.user_id
+             JOIN courts c ON c.id = r.court_id
+             WHERE r.venue_id = ? ORDER BY r.id DESC LIMIT 20',
+            [(int) $id]
+        );
+        $this->view('admin/venue_detail', [
+            'title'  => $v['name'] . ' — 구장 상세',
+            'user'   => $user,
+            'venue'  => $v,
+            'courts' => $courts,
+            'hours'  => $hours,
+            'tags'   => $tags,
+            'stats'  => $stats,
+            'recent' => $recent,
+        ], layout: 'admin');
+    }
 }

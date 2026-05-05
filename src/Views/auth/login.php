@@ -16,7 +16,7 @@ $e = static fn(?string $s): string => View::e($s);
   <div class="divider"><span>또는</span></div>
 
   <form method="post" action="/login" class="auth-form">
-    <label>이메일<input type="email" name="email" required value="<?= $e($old['email'] ?? '') ?>"></label>
+    <label>이메일 또는 아이디<input type="text" name="email" required autocomplete="username" value="<?= $e($old['email'] ?? '') ?>"></label>
     <label>비밀번호<input type="password" name="password" required></label>
     <button type="submit" class="btn btn-primary btn-block">로그인</button>
   </form>

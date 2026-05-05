@@ -92,6 +92,11 @@ $e = static fn(?string $s): string => View::e($s);
             </td>
             <td><span class="badge badge-gray"><?= $e($w['status']) ?></span></td>
             <td>
+              <?php if ($w['status'] === 'failed'): ?>
+                <form method="post" action="/operator/api/webhooks/<?= (int)$w['id'] ?>/reactivate" style="display:inline">
+                  <button type="submit" class="btn btn-line btn-sm">재시작</button>
+                </form>
+              <?php endif; ?>
               <form method="post" action="/operator/api/webhooks/<?= (int)$w['id'] ?>/delete" onsubmit="return confirm('삭제할까요?');" style="display:inline">
                 <button type="submit" class="btn btn-line btn-sm">삭제</button>
               </form>
