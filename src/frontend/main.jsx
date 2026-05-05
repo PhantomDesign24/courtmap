@@ -187,7 +187,107 @@ function App() {
     return <RecurringNewForm />;
   }
 
+  if (screen === 'support') {
+    return <SupportScreen page={(window.__DATA__ && window.__DATA__.page) || 'index'} />;
+  }
+
   return <div style={{padding:24}}>알 수 없는 화면: {screen}</div>;
+}
+
+// 고객센터 (FAQ + 공지 + 약관)
+function SupportScreen({ page }) {
+  const data = window.__DATA__ || {};
+  const [openIdx, setOpenIdx] = React.useState(-1);
+
+  return (
+    <Mobile hideTab>
+      <div style={{ padding: '10px 8px 8px', background: '#fff', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--line)' }}>
+        <button type="button" onClick={() => window.history.back()} style={{ background: 'none', border: 'none', padding: 8 }}>{I.back(22)}</button>
+        <div style={{ flex: 1, fontSize: 17, fontWeight: 700 }}>
+          {page === 'terms' ? '이용약관' : page === 'privacy' ? '개인정보처리방침' : '고객센터'}
+        </div>
+      </div>
+
+      <div style={{ background: 'var(--bg-soft)', padding: 12, minHeight: '100%' }}>
+        {page === 'index' && (
+          <>
+            <div className="card" style={{ background: '#fff', padding: 16, marginBottom: 12 }}>
+              <div className="fw-700" style={{ fontSize: 14, marginBottom: 6 }}>고객센터 운영시간</div>
+              <div className="text-sub" style={{ fontSize: 13, lineHeight: 1.6 }}>
+                평일 10:00 ~ 18:00 (주말·공휴일 휴무)<br/>
+                전화 1588-0000 · 이메일 help@bad.mvc.kr
+              </div>
+            </div>
+
+            <div className="card" style={{ background: '#fff', padding: 0, marginBottom: 12 }}>
+              <div className="fw-700" style={{ fontSize: 14, padding: '14px 16px 6px' }}>자주 묻는 질문</div>
+              {(data.faqs || []).map((f, i) => (
+                <div key={i} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                  <button type="button" onClick={() => setOpenIdx(openIdx === i ? -1 : i)}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '14px 16px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
+                    <span className="fw-600" style={{ flex: 1, fontSize: 13.5 }}>Q. {f.q}</span>
+                    <span className="text-sub" style={{ fontSize: 18, fontWeight: 300 }}>{openIdx === i ? '−' : '+'}</span>
+                  </button>
+                  {openIdx === i && (
+                    <div style={{ padding: '0 16px 14px', fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.7 }}>
+                      A. {f.a}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="card" style={{ background: '#fff', padding: 0, marginBottom: 12 }}>
+              <div className="fw-700" style={{ fontSize: 14, padding: '14px 16px 6px' }}>공지사항</div>
+              {(data.notices || []).map((n, i) => (
+                <div key={i} style={{ padding: '12px 16px', borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                  <div className="row" style={{ marginBottom: 4 }}>
+                    <div className="fw-600" style={{ fontSize: 13.5 }}>{n.title}</div>
+                    <div className="spacer" />
+                    <div className="text-sub" style={{ fontSize: 11 }}>{n.date}</div>
+                  </div>
+                  <div className="text-sub" style={{ fontSize: 12.5, lineHeight: 1.6 }}>{n.body}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="card" style={{ background: '#fff', padding: '4px 0', marginBottom: 12 }}>
+              <a href="/support/terms" style={{ display: 'block', padding: '14px 16px', borderBottom: '1px solid var(--line)', textDecoration: 'none', color: 'var(--text)', fontSize: 13.5, fontWeight: 600 }}>이용약관 →</a>
+              <a href="/support/privacy" style={{ display: 'block', padding: '14px 16px', textDecoration: 'none', color: 'var(--text)', fontSize: 13.5, fontWeight: 600 }}>개인정보처리방침 →</a>
+            </div>
+          </>
+        )}
+
+        {page === 'terms' && (
+          <div className="card" style={{ background: '#fff', padding: 18, fontSize: 13.5, lineHeight: 1.7, color: 'var(--text)' }}>
+            <h3 style={{ fontSize: 15, marginTop: 0 }}>제1조 (목적)</h3>
+            <p>본 약관은 코트맵(이하 "회사")이 제공하는 배드민턴 사설 구장 통합 예약 서비스(이하 "서비스")의 이용 조건과 절차를 규정합니다.</p>
+            <h3 style={{ fontSize: 15 }}>제2조 (이용계약)</h3>
+            <p>이용자는 회원가입 시 본 약관에 동의함으로써 회사와 이용계약을 체결합니다.</p>
+            <h3 style={{ fontSize: 15 }}>제3조 (예약 및 결제)</h3>
+            <p>예약은 무통장입금으로 결제하며, 입금기한 초과 시 자동 취소됩니다. 환불 정책은 구장별 정책에 따르며, 가입 시 등록한 본인 계좌로 송금됩니다.</p>
+            <h3 style={{ fontSize: 15 }}>제4조 (책임)</h3>
+            <p>회사는 구장과 이용자 간 중개자 역할을 하며, 시설 이용 중 발생한 사고에 대한 책임은 구장에 있습니다.</p>
+            <p className="text-sub" style={{ fontSize: 12 }}>최종 개정일: 2026-05-05</p>
+          </div>
+        )}
+
+        {page === 'privacy' && (
+          <div className="card" style={{ background: '#fff', padding: 18, fontSize: 13.5, lineHeight: 1.7, color: 'var(--text)' }}>
+            <h3 style={{ fontSize: 15, marginTop: 0 }}>1. 수집하는 개인정보</h3>
+            <p>회원가입 시: 이메일, 전화번호, 이름, 비밀번호(암호화), 환불 받을 본인 계좌(은행/계좌번호/예금주).</p>
+            <h3 style={{ fontSize: 15 }}>2. 이용 목적</h3>
+            <p>회원 식별, 예약 관리, 환불 처리, 알림 발송.</p>
+            <h3 style={{ fontSize: 15 }}>3. 보유 기간</h3>
+            <p>회원 탈퇴 시 즉시 파기. 단, 관계 법령에 따라 일정 기간 보관 (예: 전자상거래법 5년).</p>
+            <h3 style={{ fontSize: 15 }}>4. 제3자 제공</h3>
+            <p>예약 처리를 위해 해당 구장 운영자에게 예약자명·전화번호·결제정보를 제공합니다.</p>
+            <p className="text-sub" style={{ fontSize: 12 }}>최종 개정일: 2026-05-05</p>
+          </div>
+        )}
+      </div>
+    </Mobile>
+  );
 }
 
 // 홈 — 위치 변경 + 시간 필터 칩 통합 wrapper

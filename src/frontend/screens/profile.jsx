@@ -193,7 +193,10 @@ function ProfileScreen() {
       stats={stats}
       onSection={(id) => {
         if (id === 'favorites' || id === 'coupons' || id === 'membership') setView(id);
-        else if (id === 'logout') logoutSubmit();
+        else if (id === 'logout')  logoutSubmit();
+        else if (id === 'support') window.location.href = '/support';
+        else if (id === 'notif')   window.location.href = '/notifications';
+        else if (id === 'bank')    alert('환불 계좌 변경 — 가입 후 변경하려면 고객센터로 문의해주세요.');
         else alert(`${id} — 다음 단계에서 구현`);
       }}
     />

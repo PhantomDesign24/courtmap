@@ -25,6 +25,7 @@ use App\Controllers\Api\MeController as ApiMe;
 use App\Controllers\Api\EquipmentController as ApiEquipment;
 use App\Controllers\LessonController;
 use App\Controllers\SeoController;
+use App\Controllers\SupportController;
 use App\Controllers\Admin\DashboardController as AdDashboard;
 use App\Controllers\Admin\VenueController as AdVenue;
 use App\Controllers\Admin\UserController as AdUser;
@@ -110,6 +111,11 @@ $router->post('/api/lessons',                      [LessonController::class, 'cr
 // ─── SEO ──────────────────────────────────────────────────
 $router->get('/robots.txt',  [SeoController::class, 'robots']);
 $router->get('/sitemap.xml', [SeoController::class, 'sitemap']);
+
+// ─── 고객센터 ─────────────────────────────────────────────
+$router->get('/support',         [SupportController::class, 'index']);
+$router->get('/support/terms',   [SupportController::class, 'terms']);
+$router->get('/support/privacy', [SupportController::class, 'privacy']);
 
 // ─── 정기 예약 ────────────────────────────────────────────
 $router->get ('/recurring/new', [RecurringController::class, 'newForm']);

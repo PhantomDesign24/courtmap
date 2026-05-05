@@ -85,6 +85,15 @@ final class DepositController extends Controller
             'related_type' => 'reservation',
             'related_id'   => (int) $r['id'],
         ]);
+        // 알림톡 (키 미설정 시 자동 skip)
+        $u = Db::fetch('SELECT name, phone FROM users WHERE id = ?', [(int) $rFull['user_id']]);
+        \App\Services\Alimtalk::send(
+            $_ENV['ALIMTALK_TPL_CONFIRM'] ?? 'reservation_confirm',
+            $u['phone'] ?? '',
+            ['#{name}' => $u['name'] ?? '', '#{code}' => $code],
+            "[코트맵] 예약 확정 — $code"
+        );
+
         \App\Services\WebhookService::fire('reservation.confirmed', (int) $rFull['venue_id'], [
             'code'      => $code,
             'venue_id'  => (int) $rFull['venue_id'],
