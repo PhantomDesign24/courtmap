@@ -45,6 +45,27 @@ final class CoachController extends Controller
         $this->redirect('/operator/coaches?venue_id=' . $venueId);
     }
 
+    public function update(string $id): void
+    {
+        $user = $this->requireAuth('operator');
+        $r = Db::fetch('SELECT c.id, c.venue_id, v.owner_id FROM coaches c JOIN venues v ON v.id = c.venue_id WHERE c.id = ?', [(int) $id]);
+        if (!$r) Response::notFound();
+        if ((int) $r['owner_id'] !== (int) $user['id']) Response::forbidden();
+        Db::query(
+            'UPDATE coaches SET name = ?, career = ?, bio = ?, price_per_lesson = ?, duration_min = ?, img_url = ? WHERE id = ?',
+            [
+                trim((string) $_POST['name']),
+                trim((string) ($_POST['career'] ?? '')),
+                trim((string) ($_POST['bio'] ?? '')),
+                max(0, (int) $_POST['price']),
+                max(15, (int) ($_POST['duration_min'] ?? 60)),
+                trim((string) ($_POST['img_url'] ?? '')) ?: null,
+                (int) $r['id'],
+            ]
+        );
+        $this->redirect('/operator/coaches?venue_id=' . (int) $r['venue_id']);
+    }
+
     public function delete(string $id): void
     {
         $user = $this->requireAuth('operator');

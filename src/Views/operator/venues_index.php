@@ -26,7 +26,10 @@ $e = static fn(?string $s): string => View::e($s);
             <td class="num"><?= (int) $v['court_count'] ?>면</td>
             <td class="num"><?= number_format((int) $v['price_per_hour']) ?>원</td>
             <td><span class="badge <?= $v['status']==='active'?'badge-success':'badge-gray' ?>"><?= $e($v['status']) ?></span></td>
-            <td><a href="/operator/venues/<?= (int)$v['id'] ?>/edit" class="btn btn-line btn-sm">편집</a></td>
+            <td style="display:flex;gap:4px">
+              <a href="/operator/venues/<?= (int)$v['id'] ?>" class="btn btn-primary btn-sm">상세</a>
+              <a href="/operator/venues/<?= (int)$v['id'] ?>/edit" class="btn btn-line btn-sm">편집</a>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>

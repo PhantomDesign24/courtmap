@@ -79,6 +79,7 @@ $router->post('/operator/bookings/{code}/cancel',       [OpBooking::class,   'ca
 
 $router->get ('/operator/slots',                        [OpSlot::class,      'index']);
 $router->post('/operator/slots/add',                    [OpSlot::class,      'add']);
+$router->post('/operator/slots/{id}/update',            [OpSlot::class,      'update']);
 $router->post('/operator/slots/{id}/delete',            [OpSlot::class,      'delete']);
 
 $router->get ('/operator/pricing',                      [OpPricing::class,   'index']);
@@ -89,9 +90,11 @@ $router->post('/operator/pricing/auto-rules/{id}/toggle', [OpPricing::class, 'to
 $router->post('/operator/pricing/auto-rules/{id}/delete', [OpPricing::class, 'deleteAutoRule']);
 
 $router->get ('/operator/venues',                       [OpVenue::class,     'index']);
+$router->get ('/operator/venues/{id}',                  [OpVenue::class,     'detail']);
 $router->get ('/operator/venues/{id}/edit',             [OpVenue::class,     'edit']);
 $router->post('/operator/venues/{id}',                  [OpVenue::class,     'update']);
 $router->post('/operator/venues/{id}/courts/add',       [OpVenue::class,     'addCourt']);
+$router->post('/operator/venues/{id}/courts/{cid}/update', [OpVenue::class,  'updateCourt']);
 $router->post('/operator/venues/{id}/courts/{cid}/delete', [OpVenue::class,  'deleteCourt']);
 
 // ─── API ──────────────────────────────────────────────────
@@ -131,14 +134,18 @@ $router->post('/recurring',     [RecurringController::class, 'create']);
 // ─── 운영자 — 추가 영역 ──────────────────────────────────
 $router->get ('/operator/coupons',                       [OpCoupon::class,    'index']);
 $router->post('/operator/coupons',                       [OpCoupon::class,    'createCoupon']);
+$router->post('/operator/coupons/{id}/suspend',          [OpCoupon::class,    'suspendCoupon']);
 $router->post('/operator/memberships',                   [OpCoupon::class,    'createMembership']);
+$router->post('/operator/memberships/{id}/suspend',      [OpCoupon::class,    'suspendMembership']);
 
 $router->get ('/operator/equipment',                     [OpEquip::class,     'index']);
 $router->post('/operator/equipment/add',                 [OpEquip::class,     'add']);
+$router->post('/operator/equipment/{id}/update',         [OpEquip::class,     'update']);
 $router->post('/operator/equipment/{id}/delete',         [OpEquip::class,     'delete']);
 
 $router->get ('/operator/coaches',                       [OpCoach::class,     'index']);
 $router->post('/operator/coaches/add',                   [OpCoach::class,     'add']);
+$router->post('/operator/coaches/{id}/update',           [OpCoach::class,     'update']);
 $router->post('/operator/coaches/{id}/delete',           [OpCoach::class,     'delete']);
 
 $router->get ('/operator/api',                           [OpApiToken::class,  'index']);

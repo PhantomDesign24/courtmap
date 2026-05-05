@@ -21,17 +21,22 @@ $e = static fn(?string $s): string => View::e($s);
 <section class="op-card">
   <div class="op-card-head"><h2>강사 <span class="op-pill"><?= count(array_filter($coaches, fn($c) => $c['status'] === 'active')) ?></span></h2></div>
   <?php if ($coaches): ?>
+    <?php foreach ($coaches as $c): ?>
+      <form method="post" action="/operator/coaches/<?= (int)$c['id'] ?>/update" id="co_f_<?= (int)$c['id'] ?>"></form>
+    <?php endforeach; ?>
     <table class="op-table">
-      <thead><tr><th>이름</th><th>경력</th><th>회당 가격</th><th>회당 시간</th><th>상태</th><th class="op-th-actions">처리</th></tr></thead>
+      <thead><tr><th>이름</th><th>경력</th><th>회당 가격</th><th>시간(분)</th><th>사진 URL</th><th>상태</th><th class="op-th-actions">처리</th></tr></thead>
       <tbody>
-        <?php foreach ($coaches as $c): ?>
+        <?php foreach ($coaches as $c): $fid = 'co_f_' . (int)$c['id']; ?>
           <tr style="<?= $c['status']!=='active'?'opacity:0.5':'' ?>">
-            <td class="fw-700"><?= $e($c['name']) ?></td>
-            <td class="op-mute"><?= $e($c['career'] ?? '') ?></td>
-            <td class="num fw-600"><?= number_format((int)$c['price_per_lesson']) ?>원</td>
-            <td class="num"><?= (int)$c['duration_min'] ?>분</td>
+            <td><input form="<?= $fid ?>" type="text" name="name" value="<?= $e($c['name']) ?>" required style="width:120px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td><input form="<?= $fid ?>" type="text" name="career" value="<?= $e($c['career'] ?? '') ?>" style="width:200px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td class="num"><input form="<?= $fid ?>" type="number" name="price" value="<?= (int)$c['price_per_lesson'] ?>" min="0" required style="width:90px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td class="num"><input form="<?= $fid ?>" type="number" name="duration_min" value="<?= (int)$c['duration_min'] ?>" min="15" required style="width:70px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td><input form="<?= $fid ?>" type="text" name="img_url" value="<?= $e($c['img_url'] ?? '') ?>" style="width:160px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
             <td><span class="badge badge-gray"><?= $e($c['status']) ?></span></td>
-            <td>
+            <td style="display:flex;gap:4px">
+              <button form="<?= $fid ?>" type="submit" class="btn btn-primary btn-sm">저장</button>
               <?php if ($c['status'] === 'active'): ?>
                 <form method="post" action="/operator/coaches/<?= (int)$c['id'] ?>/delete" onsubmit="return confirm('비활성화할까요?');" style="display:inline">
                   <button type="submit" class="btn btn-line btn-sm">중지</button>
@@ -39,6 +44,7 @@ $e = static fn(?string $s): string => View::e($s);
               <?php endif; ?>
             </td>
           </tr>
+          <tr style="<?= $c['status']!=='active'?'opacity:0.5':'' ?>"><td colspan="7" style="padding:0 14px 12px"><textarea form="<?= $fid ?>" name="bio" rows="2" placeholder="소개" style="width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit;resize:vertical"><?= $e($c['bio'] ?? '') ?></textarea></td></tr>
         <?php endforeach; ?>
       </tbody>
     </table>

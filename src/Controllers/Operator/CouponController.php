@@ -65,6 +65,28 @@ final class CouponController extends Controller
         $this->redirect('/operator/coupons');
     }
 
+    public function suspendCoupon(string $id): void
+    {
+        $user = $this->requireAuth('operator');
+        $r = Db::fetch('SELECT c.id, c.status, v.owner_id FROM coupons c JOIN venues v ON v.id = c.venue_id WHERE c.id = ?', [(int) $id]);
+        if (!$r) Response::notFound();
+        if ((int) $r['owner_id'] !== (int) $user['id']) Response::forbidden();
+        $next = $r['status'] === 'suspended' ? 'active' : 'suspended';
+        Db::query('UPDATE coupons SET status = ? WHERE id = ?', [$next, (int) $r['id']]);
+        $this->redirect('/operator/coupons');
+    }
+
+    public function suspendMembership(string $id): void
+    {
+        $user = $this->requireAuth('operator');
+        $r = Db::fetch('SELECT m.id, m.status, v.owner_id FROM memberships m JOIN venues v ON v.id = m.venue_id WHERE m.id = ?', [(int) $id]);
+        if (!$r) Response::notFound();
+        if ((int) $r['owner_id'] !== (int) $user['id']) Response::forbidden();
+        $next = $r['status'] === 'suspended' ? 'active' : 'suspended';
+        Db::query('UPDATE memberships SET status = ? WHERE id = ?', [$next, (int) $r['id']]);
+        $this->redirect('/operator/coupons');
+    }
+
     public function createMembership(): void
     {
         $user = $this->requireAuth('operator');

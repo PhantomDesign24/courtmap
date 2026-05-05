@@ -94,15 +94,20 @@ foreach ($hours as $h) $hoursByDow[(int)$h['day_of_week']] = $h;
   <?php if (!$courts): ?>
     <div class="op-empty">코트가 없습니다.</div>
   <?php else: ?>
+    <?php foreach ($courts as $c): ?>
+      <form method="post" action="/operator/venues/<?= (int)$venue['id'] ?>/courts/<?= (int)$c['id'] ?>/update" id="ec_f_<?= (int)$c['id'] ?>"></form>
+    <?php endforeach; ?>
     <table class="op-table">
-      <thead><tr><th>이름</th><th>가격(오버라이드)</th><th>상태</th><th class="op-th-actions">처리</th></tr></thead>
+      <thead><tr><th>이름</th><th>가격(오버라이드)</th><th>정렬</th><th>상태</th><th class="op-th-actions">처리</th></tr></thead>
       <tbody>
-        <?php foreach ($courts as $c): ?>
+        <?php foreach ($courts as $c): $fid = 'ec_f_' . (int)$c['id']; ?>
           <tr style="<?= $c['status']!=='active' ? 'opacity:0.5' : '' ?>">
-            <td class="fw-600"><?= $e($c['name']) ?></td>
-            <td class="num"><?= $c['price_override'] ? number_format((int)$c['price_override']) . '원' : '<span class="op-mute">기본</span>' ?></td>
+            <td><input form="<?= $fid ?>" type="text" name="name" value="<?= $e($c['name']) ?>" required style="width:120px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td class="num"><input form="<?= $fid ?>" type="number" name="price_override" value="<?= $c['price_override']!==null?(int)$c['price_override']:'' ?>" placeholder="기본" min="0" style="width:100px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td class="num"><input form="<?= $fid ?>" type="number" name="sort_order" value="<?= (int)$c['sort_order'] ?>" min="0" style="width:60px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
             <td><span class="badge badge-gray"><?= $e($c['status']) ?></span></td>
-            <td>
+            <td style="display:flex;gap:4px">
+              <button form="<?= $fid ?>" type="submit" class="btn btn-primary btn-sm">저장</button>
               <?php if ($c['status'] === 'active'): ?>
                 <form method="post" action="/operator/venues/<?= (int)$venue['id'] ?>/courts/<?= (int)$c['id'] ?>/delete" onsubmit="return confirm('이 코트를 닫을까요?');" style="display:inline">
                   <button type="submit" class="btn btn-line btn-sm">닫기</button>

@@ -25,10 +25,13 @@ $type_label = ['default'=>'기본','dow'=>'요일','holiday'=>'공휴일','speci
   <?php if (!$rules): ?>
     <div class="op-empty">규칙이 없습니다. 아래에서 추가하세요.</div>
   <?php else: ?>
+    <?php foreach ($rules as $r): ?>
+      <form method="post" action="/operator/slots/<?= (int)$r['id'] ?>/update" id="rule_f_<?= (int)$r['id'] ?>"></form>
+    <?php endforeach; ?>
     <table class="op-table">
       <thead><tr><th>유형</th><th>대상</th><th>슬롯 단위</th><th>비고</th><th class="op-th-actions">처리</th></tr></thead>
       <tbody>
-        <?php foreach ($rules as $r): ?>
+        <?php foreach ($rules as $r): $fid = 'rule_f_' . (int)$r['id']; ?>
           <tr>
             <td><span class="badge badge-soft"><?= $e($type_label[$r['rule_type']] ?? $r['rule_type']) ?></span></td>
             <td>
@@ -39,9 +42,16 @@ $type_label = ['default'=>'기본','dow'=>'요일','holiday'=>'공휴일','speci
                 default         => '항상 적용',
               } ?>
             </td>
-            <td class="fw-700 num"><?= (int)$r['slot_unit_hours'] ?>시간</td>
-            <td class="op-mute"><?= $e($r['note'] ?? '') ?></td>
             <td>
+              <select form="<?= $fid ?>" name="slot_unit_hours" style="height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px">
+                <?php foreach ([1,2,3] as $u): ?>
+                  <option value="<?= $u ?>" <?= (int)$r['slot_unit_hours']===$u?'selected':'' ?>><?= $u ?>시간</option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+            <td><input form="<?= $fid ?>" type="text" name="note" value="<?= $e($r['note'] ?? '') ?>" maxlength="120" placeholder="비고" style="width:160px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px"></td>
+            <td style="display:flex;gap:4px">
+              <button form="<?= $fid ?>" type="submit" class="btn btn-primary btn-sm">저장</button>
               <form method="post" action="/operator/slots/<?= (int)$r['id'] ?>/delete" onsubmit="return confirm('이 규칙을 삭제할까요?');" style="display:inline">
                 <button type="submit" class="btn btn-line btn-sm">삭제</button>
               </form>

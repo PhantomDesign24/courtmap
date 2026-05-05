@@ -45,6 +45,27 @@ final class EquipmentController extends Controller
         $this->redirect('/operator/equipment?venue_id=' . $venueId);
     }
 
+    public function update(string $id): void
+    {
+        $user = $this->requireAuth('operator');
+        $r = Db::fetch('SELECT eo.id, eo.venue_id, v.owner_id FROM equipment_options eo JOIN venues v ON v.id = eo.venue_id WHERE eo.id = ?', [(int) $id]);
+        if (!$r) Response::notFound();
+        if ((int) $r['owner_id'] !== (int) $user['id']) Response::forbidden();
+        Db::query(
+            'UPDATE equipment_options SET name = ?, description = ?, price = ?, default_check = ?, max_qty = ?, sort_order = ? WHERE id = ?',
+            [
+                trim((string) $_POST['name']),
+                trim((string) ($_POST['description'] ?? '')),
+                max(0, (int) $_POST['price']),
+                empty($_POST['default_check']) ? 0 : 1,
+                max(1, min(20, (int) ($_POST['max_qty'] ?? 1))),
+                max(0, (int) ($_POST['sort_order'] ?? 0)),
+                (int) $r['id'],
+            ]
+        );
+        $this->redirect('/operator/equipment?venue_id=' . (int) $r['venue_id']);
+    }
+
     public function delete(string $id): void
     {
         $user = $this->requireAuth('operator');

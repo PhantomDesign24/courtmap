@@ -14,7 +14,7 @@ $e = static fn(?string $s): string => View::e($s);
   <div class="op-card-head"><h2>쿠폰 <span class="op-pill"><?= count($coupons) ?></span></h2></div>
   <?php if ($coupons): ?>
     <table class="op-table">
-      <thead><tr><th>이름</th><th>할인</th><th>최소사용</th><th>유효기간</th><th>발행/사용</th><th>상태</th></tr></thead>
+      <thead><tr><th>이름</th><th>할인</th><th>최소사용</th><th>유효기간</th><th>발행/사용</th><th>상태</th><th class="op-th-actions">처리</th></tr></thead>
       <tbody>
         <?php foreach ($coupons as $c): ?>
           <tr>
@@ -24,6 +24,11 @@ $e = static fn(?string $s): string => View::e($s);
             <td class="op-mute"><?= $c['valid_until'] ? '~' . substr((string)$c['valid_until'], 0, 10) : '무기한' ?></td>
             <td class="num"><?= (int)$c['issued_count'] ?> / <?= $c['total_quota'] ?? '∞' ?></td>
             <td><span class="badge <?= $c['status']==='active'?'badge-success':'badge-gray' ?>"><?= $e($c['status']) ?></span></td>
+            <td>
+              <form method="post" action="/operator/coupons/<?= (int)$c['id'] ?>/suspend" style="display:inline">
+                <button type="submit" class="btn btn-line btn-sm"><?= $c['status']==='suspended'?'재개':'중지' ?></button>
+              </form>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -65,7 +70,7 @@ $e = static fn(?string $s): string => View::e($s);
   <div class="op-card-head"><h2>멤버십 상품 <span class="op-pill"><?= count($memberships) ?></span></h2></div>
   <?php if ($memberships): ?>
     <table class="op-table">
-      <thead><tr><th>이름</th><th>구장</th><th>가격</th><th>시간</th><th>유효월</th><th>가입자</th></tr></thead>
+      <thead><tr><th>이름</th><th>구장</th><th>가격</th><th>시간</th><th>유효월</th><th>가입자</th><th>상태</th><th class="op-th-actions">처리</th></tr></thead>
       <tbody>
         <?php foreach ($memberships as $m): ?>
           <tr>
@@ -75,6 +80,12 @@ $e = static fn(?string $s): string => View::e($s);
             <td class="num"><?= (int)$m['hours_total'] ?>h</td>
             <td class="num"><?= (int)$m['valid_months'] ?>개월</td>
             <td class="num"><?= (int)$m['active_count'] ?>명</td>
+            <td><span class="badge <?= $m['status']==='active'?'badge-success':'badge-gray' ?>"><?= $e($m['status']) ?></span></td>
+            <td>
+              <form method="post" action="/operator/memberships/<?= (int)$m['id'] ?>/suspend" style="display:inline">
+                <button type="submit" class="btn btn-line btn-sm"><?= $m['status']==='suspended'?'재개':'중지' ?></button>
+              </form>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>

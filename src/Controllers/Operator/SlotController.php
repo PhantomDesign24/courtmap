@@ -58,6 +58,22 @@ final class SlotController extends Controller
         $this->redirect('/operator/slots?venue_id=' . $venueId);
     }
 
+    public function update(string $id): void
+    {
+        $user = $this->requireAuth('operator');
+        $rule = Db::fetch('SELECT sr.id, sr.venue_id, v.owner_id FROM slot_rules sr JOIN venues v ON v.id = sr.venue_id WHERE sr.id = ?', [(int) $id]);
+        if (!$rule)                                       Response::notFound();
+        if ((int) $rule['owner_id'] !== (int) $user['id']) Response::forbidden();
+        $unit = (int) $_POST['slot_unit_hours'];
+        if (!in_array($unit, [1, 2, 3], true)) {
+            $this->redirect('/operator/slots?venue_id=' . (int) $rule['venue_id']);
+        }
+        Db::query('UPDATE slot_rules SET slot_unit_hours = ?, note = ? WHERE id = ?', [
+            $unit, (string) ($_POST['note'] ?? ''), (int) $rule['id'],
+        ]);
+        $this->redirect('/operator/slots?venue_id=' . (int) $rule['venue_id']);
+    }
+
     public function delete(string $id): void
     {
         $user = $this->requireAuth('operator');

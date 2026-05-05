@@ -194,6 +194,88 @@ final class VenueController extends Controller
         $this->redirect('/operator/venues/' . $v['id'] . '/edit');
     }
 
+    public function updateCourt(string $id, string $cid): void
+    {
+        [$user, $v] = $this->loadOwn((int) $id);
+        $c = Db::fetch('SELECT id FROM courts WHERE id = ? AND venue_id = ?', [(int) $cid, $v['id']]);
+        if (!$c) Response::notFound();
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $price = $_POST['price_override'] === '' ? null : max(0, (int) $_POST['price_override']);
+        $sort = max(0, (int) ($_POST['sort_order'] ?? 0));
+        if ($name === '') $this->redirect('/operator/venues/' . $v['id'] . '/edit');
+        Db::query(
+            'UPDATE courts SET name = ?, price_override = ?, sort_order = ? WHERE id = ?',
+            [$name, $price, $sort, (int) $c['id']]
+        );
+        $this->redirect('/operator/venues/' . $v['id'] . '/edit');
+    }
+
+    public function detail(string $id): void
+    {
+        [$user, $v] = $this->loadOwn((int) $id);
+        $venueId = (int) $v['id'];
+
+        $kpi = Db::fetch(
+            'SELECT
+               (SELECT COUNT(*) FROM reservations r JOIN courts c ON c.id = r.court_id
+                  WHERE c.venue_id = ? AND r.reservation_date = CURDATE() AND r.status IN ("pending","confirmed")) AS today_cnt,
+               (SELECT COALESCE(SUM(total_price),0) FROM reservations r JOIN courts c ON c.id = r.court_id
+                  WHERE c.venue_id = ? AND r.reservation_date = CURDATE() AND r.status = "confirmed") AS today_rev,
+               (SELECT COUNT(*) FROM reservations r JOIN courts c ON c.id = r.court_id
+                  WHERE c.venue_id = ? AND r.status = "pending") AS pending_cnt,
+               (SELECT COUNT(*) FROM courts WHERE venue_id = ? AND status = "active") AS court_cnt',
+            [$venueId, $venueId, $venueId, $venueId]
+        );
+
+        $courts      = Db::fetchAll('SELECT * FROM courts WHERE venue_id = ? ORDER BY sort_order, id', [$venueId]);
+        $hours       = Db::fetchAll('SELECT * FROM venue_hours WHERE venue_id = ? ORDER BY day_of_week', [$venueId]);
+        $rules       = Db::fetchAll(
+            'SELECT * FROM slot_rules WHERE venue_id = ?
+             ORDER BY FIELD(rule_type, "specific_date","holiday","dow","default"), id',
+            [$venueId]
+        );
+        $deals = Db::fetchAll(
+            'SELECT dp.*, c.name AS court_name FROM dynamic_pricing dp
+             LEFT JOIN courts c ON c.id = dp.court_id
+             WHERE dp.venue_id = ? ORDER BY dp.target_date DESC, dp.id DESC LIMIT 20',
+            [$venueId]
+        );
+        $equipment   = Db::fetchAll('SELECT * FROM equipment_options WHERE venue_id = ? ORDER BY sort_order, id', [$venueId]);
+        $coaches     = Db::fetchAll('SELECT * FROM coaches WHERE venue_id = ? ORDER BY sort_order, id', [$venueId]);
+        $coupons     = Db::fetchAll('SELECT * FROM coupons WHERE venue_id = ? ORDER BY id DESC', [$venueId]);
+        $memberships = Db::fetchAll(
+            'SELECT m.*, (SELECT COUNT(*) FROM user_memberships WHERE membership_id = m.id AND status = "active") AS active_count
+             FROM memberships m WHERE m.venue_id = ? ORDER BY id DESC',
+            [$venueId]
+        );
+        $recent = Db::fetchAll(
+            'SELECT r.code, r.reservation_date, r.start_hour, r.duration_hours, r.status, r.total_price,
+                    c.name AS court_name, u.name AS user_name
+             FROM reservations r
+             JOIN courts c ON c.id = r.court_id
+             JOIN users u ON u.id = r.user_id
+             WHERE c.venue_id = ?
+             ORDER BY r.id DESC LIMIT 20',
+            [$venueId]
+        );
+
+        $this->view('operator/venues_detail', [
+            'title'       => $v['name'] . ' — 통합 관리',
+            'user'        => $user,
+            'venue'       => $v,
+            'kpi'         => $kpi,
+            'courts'      => $courts,
+            'hours'       => $hours,
+            'rules'       => $rules,
+            'deals'       => $deals,
+            'equipment'   => $equipment,
+            'coaches'     => $coaches,
+            'coupons'     => $coupons,
+            'memberships' => $memberships,
+            'recent'      => $recent,
+        ], layout: 'operator');
+    }
+
     /** @return array{0: array, 1: array} */
     private function loadOwn(int $id): array
     {
