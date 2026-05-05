@@ -19,7 +19,8 @@ final class ReservationService
         $courtIds = isset($in['court_ids']) && is_array($in['court_ids'])
                   ? array_values(array_filter(array_map('intval', $in['court_ids'])))
                   : [(int) ($in['court_id'] ?? 0)];
-        $courtIds = array_unique(array_filter($courtIds));
+        $courtIds = array_values(array_unique(array_filter($courtIds)));
+        sort($courtIds, SORT_NUMERIC); // deadlock 방지 — 항상 같은 순서로 잠금
         $date     = (string) ($in['date'] ?? '');
         $startH   = (int) ($in['start_hour'] ?? -1);
         $duration = (int) ($in['duration_hours'] ?? 0);

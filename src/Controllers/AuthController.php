@@ -80,11 +80,29 @@ final class AuthController extends Controller
 
         $email = trim((string) $this->input('email', ''));
         $pass  = (string) $this->input('password', '');
+        $ip    = $_SERVER['REMOTE_ADDR'] ?? '';
+
+        // brute force 방지 — IP+email 기준 최근 15분 실패 5회 이상이면 잠금
+        $key = hash('sha256', $ip . '|' . strtolower($email));
+        $bucket = $_SESSION['login_attempts'][$key] ?? ['count' => 0, 'until' => 0];
+        if ($bucket['until'] > time()) {
+            $remaining = (int) ($bucket['until'] - time());
+            $this->view('auth/login', [
+                'title'  => '로그인',
+                'errors' => ['시도가 너무 많습니다. ' . ceil($remaining / 60) . '분 뒤에 다시 시도해주세요.'],
+                'old'    => ['email' => $email],
+            ]);
+            return;
+        }
 
         $user = Db::fetch('SELECT id, password_hash, status FROM users WHERE email = ?', [$email]);
         $ok   = $user && $user['status'] === 'active' && password_verify($pass, $user['password_hash'] ?? '');
 
         if (!$ok) {
+            // 실패 카운트 증가 (지수 backoff: 5/10/30/60분)
+            $bucket['count']++;
+            $bucket['until'] = $bucket['count'] >= 5 ? time() + min(3600, 300 * (1 << ($bucket['count'] - 5))) : 0;
+            $_SESSION['login_attempts'][$key] = $bucket;
             $this->view('auth/login', [
                 'title'  => '로그인',
                 'errors' => ['이메일 또는 비밀번호가 올바르지 않습니다.'],
@@ -92,6 +110,8 @@ final class AuthController extends Controller
             ]);
             return;
         }
+        // 성공 시 카운트 초기화
+        unset($_SESSION['login_attempts'][$key]);
 
         Auth::login((int) $user['id']);
         $next = (string) ($_GET['next'] ?? '/me');
@@ -136,7 +156,9 @@ final class AuthController extends Controller
             $token   = \App\Services\KakaoOAuth::exchangeCode($code);
             $profile = \App\Services\KakaoOAuth::fetchProfile($token['access_token']);
         } catch (\Throwable $e) {
-            $this->view('auth/login', ['title' => '로그인', 'errors' => ['카카오 로그인 실패: ' . $e->getMessage()]]);
+            // 상세 사유는 서버 로그에만 기록, 사용자에겐 일반 메시지
+            error_log('KakaoOAuth error: ' . $e->getMessage());
+            $this->view('auth/login', ['title' => '로그인', 'errors' => ['카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.']]);
             return;
         }
 

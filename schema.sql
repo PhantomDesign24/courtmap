@@ -79,8 +79,9 @@ CREATE TABLE user_sessions (
 CREATE TABLE api_tokens (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   venue_id        BIGINT UNSIGNED NOT NULL,
-  token           VARCHAR(128)    NOT NULL,
-  name            VARCHAR(80)     NOT NULL,                 -- 사용자 식별용 라벨
+  token           VARCHAR(128)    NOT NULL,                 -- 표시용 prefix (raw 는 발급 직후 1회만 노출)
+  token_hash      VARCHAR(64)     DEFAULT NULL,             -- SHA256(raw_token) — 실제 매칭은 hash 로
+  name            VARCHAR(80)     NOT NULL,
   scopes          VARCHAR(255)    NOT NULL DEFAULT 'reservations:read',
   last_used_at    DATETIME        DEFAULT NULL,
   expires_at      DATETIME        DEFAULT NULL,
@@ -89,6 +90,7 @@ CREATE TABLE api_tokens (
 
   PRIMARY KEY (id),
   UNIQUE KEY uk_api_token (token),
+  UNIQUE KEY uk_api_token_hash (token_hash),
   KEY idx_api_venue (venue_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -128,6 +130,7 @@ CREATE TABLE venues (
   review_count    INT UNSIGNED    NOT NULL DEFAULT 0,
 
   status          ENUM('pending','active','suspended','closed') NOT NULL DEFAULT 'pending',
+  calendar_token  VARCHAR(64)     DEFAULT NULL,             -- iCal 피드 인증 토큰 (구장별 고유)
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -325,6 +328,9 @@ CREATE TABLE reservations (
   -- 정기예약 묶음
   recurring_group_id BIGINT UNSIGNED DEFAULT NULL,
 
+  -- 멀티코트 예약 묶음 식별자 (같은 사용자/시간/날짜에 여러 코트 동시 예약)
+  bulk_group      VARCHAR(40)     DEFAULT NULL,
+
   -- 다이나믹 프라이싱 매칭
   dynamic_pricing_id BIGINT UNSIGNED DEFAULT NULL,
 
@@ -347,6 +353,7 @@ CREATE TABLE reservations (
   KEY idx_user (user_id, status, reservation_date),
   KEY idx_status_due (status, deposit_due_at),
   KEY idx_recurring (recurring_group_id),
+  KEY idx_bulk_group (bulk_group),
 
   CONSTRAINT fk_res_user   FOREIGN KEY (user_id)  REFERENCES users(id)    ON DELETE RESTRICT,
   CONSTRAINT fk_res_venue  FOREIGN KEY (venue_id) REFERENCES venues(id)   ON DELETE RESTRICT,
@@ -373,6 +380,7 @@ CREATE TABLE dynamic_pricing (
   expires_at      DATETIME        DEFAULT NULL,
 
   PRIMARY KEY (id),
+  UNIQUE KEY uk_dp_slot (venue_id, court_id, target_date, target_start_hour, target_end_hour),
   KEY idx_dp_lookup (venue_id, target_date, status),
   KEY idx_dp_court  (court_id, target_date),
   CONSTRAINT fk_dp_venue FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE,
@@ -491,6 +499,8 @@ CREATE TABLE equipment_options (
   name            VARCHAR(60)     NOT NULL,                 -- "라켓 1자루 (YONEX)"
   description     VARCHAR(120)    DEFAULT NULL,             -- "12개입"
   price           INT UNSIGNED    NOT NULL,
+  default_check   TINYINT(1)      NOT NULL DEFAULT 0,       -- 사용자 측 예약 시트에서 기본 체크 여부
+  max_qty         TINYINT UNSIGNED NOT NULL DEFAULT 1,      -- 1회 예약당 최대 수량
   status          ENUM('active','suspended') NOT NULL DEFAULT 'active',
   sort_order      SMALLINT        NOT NULL DEFAULT 0,
 

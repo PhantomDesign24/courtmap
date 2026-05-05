@@ -51,7 +51,9 @@ foreach ($rules as $r) {
             );
             if ($exists) continue;
 
-            Db::insert('dynamic_pricing', [
+            // unique key (venue/court/date/start/end) 가 있어 INSERT IGNORE 로 race 방지
+            try {
+                Db::insert('dynamic_pricing', [
                 'venue_id'          => $venueId,
                 'court_id'          => $cid,
                 'target_date'       => $today,
@@ -61,8 +63,12 @@ foreach ($rules as $r) {
                 'status'            => 'active',
                 'created_by'        => (int) Db::fetch('SELECT owner_id FROM venues WHERE id = ?', [$venueId])['owner_id'],
                 'expires_at'        => date('Y-m-d H:i:s', strtotime("$today " . sprintf('%02d:00', $h + 1))),
-            ]);
-            $created++;
+                ]);
+                $created++;
+            } catch (\PDOException $e) {
+                // 23000 = unique 충돌 — 다른 cron 인스턴스가 이미 발행함
+                if ($e->getCode() !== '23000') throw $e;
+            }
         }
     }
 }

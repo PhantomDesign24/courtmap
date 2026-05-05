@@ -17,10 +17,14 @@ $processed = 0;
 foreach ($rows as $r) {
     try {
         Db::transaction(function () use ($r) {
-            Db::query(
+            // status=confirmed 일 때만 UPDATE — 다른 cron 인스턴스가 이미 처리했으면 0건 → skip
+            $stmt = Db::query(
                 'UPDATE reservations SET status = "noshow", updated_at = NOW() WHERE id = ? AND status = "confirmed"',
                 [$r['id']]
             );
+            if ($stmt->rowCount() === 0) {
+                throw new \RuntimeException('already processed');
+            }
             Db::insert('noshow_logs', [
                 'reservation_id' => (int) $r['id'],
                 'user_id'        => (int) $r['user_id'],

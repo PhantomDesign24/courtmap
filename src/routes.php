@@ -152,6 +152,7 @@ $router->post('/admin/venues/{id}/reactivate',           [AdVenue::class,     'r
 $router->get ('/admin/users',                            [AdUser::class,      'index']);
 $router->post('/admin/users/{id}/suspend',               [AdUser::class,      'suspend']);
 $router->post('/admin/users/{id}/score',                 [AdUser::class,      'adjustScore']);
+$router->post('/admin/users/{id}/role',                  [AdUser::class,      'changeRole']);
 $router->get ('/admin/reports',                          [AdReport::class,    'index']);
 
 // ─── 운영자 — 신규 구장 신청 ─────────────────────────────
