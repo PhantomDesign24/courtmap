@@ -164,6 +164,11 @@ $router->post('/operator/api/webhooks/{id}/delete',      [OpApiToken::class,  'd
 // ─── 관리자 ───────────────────────────────────────────────
 $router->get ('/admin',                                  [AdDashboard::class, 'index']);
 $router->get ('/admin/venues',                           [AdVenue::class,     'index']);
+$router->get ('/admin/venues/{id}/edit',                 [AdVenue::class,     'edit']);
+$router->post('/admin/venues/{id}/update',               [AdVenue::class,     'update']);
+$router->post('/admin/venues/{id}/owner',                [AdVenue::class,     'changeOwner']);
+$router->post('/admin/venues/{id}/force-suspend',        [AdVenue::class,     'forceSuspend']);
+$router->post('/admin/venues/{id}/soft-delete',          [AdVenue::class,     'softDelete']);
 $router->post('/admin/venues/{id}/approve',              [AdVenue::class,     'approve']);
 $router->post('/admin/venues/{id}/reject',               [AdVenue::class,     'reject']);
 $router->post('/admin/venues/{id}/reactivate',           [AdVenue::class,     'reactivate']);

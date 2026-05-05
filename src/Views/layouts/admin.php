@@ -9,7 +9,7 @@ $pendingCount = (int) (Db::fetch('SELECT COUNT(*) AS c FROM venues WHERE status 
 $failedHooks = (int) (Db::fetch('SELECT COUNT(*) AS c FROM webhooks WHERE status = "failed"')['c'] ?? 0);
 $nav = [
     ['/admin',           '대시보드',     0],
-    ['/admin/venues',    '구장 승인',    $pendingCount],
+    ['/admin/venues',    '구장 관리',    $pendingCount],
     ['/admin/users',     '사용자 관리',  0],
     ['/admin/finance',   '재무·환불',    0],
     ['/admin/reports',   '신고·이슈',    0],
