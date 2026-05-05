@@ -89,7 +89,14 @@ function U3Detail({ venueId = "v1", onBack, onSelectSlot, isFav: isFavInit = fal
         <div style={{ position: "absolute", top: 8, left: 8, right: 8, display: "flex", justifyContent: "space-between" }}>
           <button type="button" onClick={onBack} style={{ width: 36, height: 36, borderRadius: 18, background: "rgba(255,255,255,.92)", border: "none", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.back(20)}</button>
           <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" style={{ width: 36, height: 36, borderRadius: 18, background: "rgba(255,255,255,.92)", border: "none", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.share(18)}</button>
+            <button type="button" onClick={async () => {
+              const url = window.location.href;
+              const title = v.name + ' — 코트맵';
+              try {
+                if (navigator.share) await navigator.share({ title, url });
+                else { await navigator.clipboard.writeText(url); alert('링크가 복사되었습니다.'); }
+              } catch (e) {}
+            }} style={{ width: 36, height: 36, borderRadius: 18, background: "rgba(255,255,255,.92)", border: "none", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.share(18)}</button>
             <button type="button" onClick={handleFav} style={{ width: 36, height: 36, borderRadius: 18, background: "rgba(255,255,255,.92)", border: "none", display:"flex", alignItems:"center", justifyContent:"center" }}>{I.heart(20, isFav ? "var(--hot-500)" : "currentColor", isFav ? "var(--hot-500)" : "none")}</button>
           </div>
         </div>

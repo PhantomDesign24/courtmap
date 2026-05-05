@@ -248,19 +248,26 @@ function U6Complete({ booking, onHome, onMyReservations, onEntry }) {
               <div className="fw-700" style={{ fontSize: 14.5, marginBottom: 2 }}>{v.name}</div>
               <div className="text-sub" style={{ fontSize: 12 }}>{v.area}</div>
             </div>
-            <button type="button" className="btn btn-sm btn-line">길찾기</button>
+            <a href={`https://map.naver.com/p/search/${encodeURIComponent(v.area || v.name)}`} target="_blank" rel="noopener" className="btn btn-sm btn-line" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>길찾기</a>
           </div>
           <div className="hr" style={{ margin: "0 0 12px" }}/>
           <div style={{ display: "grid", gridTemplateColumns: "70px 1fr", rowGap: 8, fontSize: 13 }}>
             <span className="text-sub">예약번호</span><span className="fw-600 num">{b.code || `CMAP-${b.day.day}${b.hour}${b.court}`}</span>
-            <span className="text-sub">날짜</span><span className="fw-600">2026년 5월 {b.day.day}일 ({b.day.dow})</span>
+            <span className="text-sub">날짜</span><span className="fw-600">{b.day.date ? `${b.day.date.slice(0,4)}년 ${parseInt(b.day.date.slice(5,7),10)}월 ${parseInt(b.day.date.slice(8,10),10)}일 (${b.day.dow})` : `${b.day.day}일 (${b.day.dow})`}</span>
             <span className="text-sub">시간</span><span className="fw-600 num">{String(b.hour).padStart(2,"0")}:00 ~ {String(b.hour + b.duration).padStart(2,"0")}:00</span>
             <span className="text-sub">코트</span><span className="fw-600">{["A","B","C","D"][b.court-1]}코트</span>
             <span className="text-sub">결제금액</span><span className="fw-700 num text-brand">{won(b.total)}</span>
           </div>
         </div>
 
-        <button type="button" className="btn btn-line btn-md btn-block" style={{ marginBottom: 10 }}>
+        <button type="button" onClick={async () => {
+          const url = window.location.href;
+          const title = `[코트맵] ${v.name} 예약 — ${b.code || ''}`;
+          try {
+            if (navigator.share) await navigator.share({ title, url });
+            else { await navigator.clipboard.writeText(url); alert('링크가 복사되었습니다.'); }
+          } catch (e) {}
+        }} className="btn btn-line btn-md btn-block" style={{ marginBottom: 10 }}>
           {I.share(16)} 동호회 단톡방에 공유
         </button>
         <div style={{ height: 16 }}/>

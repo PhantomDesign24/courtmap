@@ -617,10 +617,10 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
             </button>
             <div className="hr" style={{ margin: "0 0 12px" }}/>
             <div style={{ display: "grid", gridTemplateColumns: "70px 1fr", rowGap: 9, fontSize: 13 }}>
-              <span className="text-sub">날짜</span><span className="fw-600">2026년 {r.day}</span>
+              <span className="text-sub">날짜</span><span className="fw-600">{r.day}</span>
               <span className="text-sub">시간</span><span className="fw-600 num">{r.time}</span>
               <span className="text-sub">코트</span><span className="fw-600">{r.court}</span>
-              <span className="text-sub">예약자</span><span className="fw-600">박지훈 · 010-****-3849</span>
+              <span className="text-sub">예약자</span><span className="fw-600">{(window.__USER__ && window.__USER__.name) || '회원'} · {(window.__USER__ && window.__USER__.phone) || ''}</span>
               {r.recurring && (<>
                 <span className="text-sub">정기</span>
                 <span className="fw-600">{r.recurringInfo || "매주 일요일 · 4주차 중 1회차"}</span>
@@ -670,7 +670,7 @@ function ReservationDetail({ reservation, onBack, onEntry, onVenue }) {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="fw-700" style={{ fontSize: 13.5 }}>운영자에게 문의</div>
-              <div className="text-sub" style={{ fontSize: 11.5 }}>02-555-3849 · 카카오톡 채널</div>
+              <div className="text-sub" style={{ fontSize: 11.5 }}>{v && v.phone ? v.phone : '연락처 미등록'}</div>
             </div>
             <button type="button" className="btn btn-sm btn-line" style={{ height: 32 }}>채팅</button>
           </div>
