@@ -1,0 +1,322 @@
+/* 배드민턴 예약 플랫폼 — 디자인 시스템 토큰 */
+:root {
+  /* Brand */
+  --brand-50:  #eef2ff;
+  --brand-100: #dbe5ff;
+  --brand-200: #b4c7ff;
+  --brand-300: #8aa6ff;
+  --brand-400: #5c80ff;
+  --brand-500: #1e50ff;   /* primary cobalt */
+  --brand-600: #1842d6;
+  --brand-700: #1335a8;
+  --brand-800: #0e2980;
+
+  /* Accent (핫딜·강조) */
+  --hot-50:   #fff1f0;
+  --hot-100:  #ffd9d4;
+  --hot-500:  #ff3b30;
+  --hot-600:  #e02d23;
+  --hot-700:  #b8241c;
+
+  --gold-500: #ffb020;
+  --green-500:#00b86b;
+  --green-100:#dcf6e8;
+
+  /* Neutrals */
+  --gray-0:   #ffffff;
+  --gray-25:  #fafbfc;
+  --gray-50:  #f5f6f8;
+  --gray-100: #eceef2;
+  --gray-200: #dde0e7;
+  --gray-300: #c3c8d2;
+  --gray-400: #9aa0ae;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #2f3441;
+  --gray-800: #1d2330;
+  --gray-900: #0f1320;
+
+  /* Semantic */
+  --bg:        #ffffff;
+  --bg-soft:   #f5f6f8;
+  --text:      #1d2330;
+  --text-sub:  #6b7280;
+  --text-mute: #9aa0ae;
+  --line:      #eceef2;
+  --line-strong:#dde0e7;
+
+  /* Radius */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(15,19,32,.06), 0 1px 1px rgba(15,19,32,.04);
+  --shadow-md: 0 4px 14px rgba(15,19,32,.08);
+  --shadow-lg: 0 12px 32px rgba(15,19,32,.12);
+
+  /* Type */
+  --font-kr: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+}
+
+/* Pretendard webfont */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: var(--font-kr);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; }
+
+/* ─── Mobile box ─── */
+.mobile {
+  width: 390px;
+  height: 844px;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--text);
+  display: flex; flex-direction: column;
+  border-radius: 38px;
+}
+
+/* Status bar */
+.status-bar {
+  height: 44px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 22px 0 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+  background: transparent;
+}
+.status-bar.dark { color: #fff; }
+.status-icons { display: flex; align-items: center; gap: 5px; }
+.status-icons svg { display: block; }
+
+/* App body — scroll region */
+.app-body {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  scrollbar-width: none;
+}
+.app-body::-webkit-scrollbar { display: none; }
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px;
+  border: none; outline: none;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all .15s ease;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary { background: var(--brand-500); color: #fff; }
+.btn-primary:hover { background: var(--brand-600); }
+.btn-secondary { background: var(--gray-100); color: var(--text); }
+.btn-ghost { background: transparent; color: var(--brand-500); }
+.btn-line { background: #fff; color: var(--text); border: 1px solid var(--line-strong); }
+
+.btn-lg { height: 52px; padding: 0 20px; font-size: 16px; border-radius: 14px; }
+.btn-md { height: 44px; padding: 0 16px; font-size: 14px; }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; border-radius: var(--r-sm); }
+
+.btn-block { width: 100%; }
+
+/* ─── Badges / Chips ─── */
+.badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  line-height: 1;
+}
+.badge-hot     { background: var(--hot-500); color: #fff; }
+.badge-soft    { background: var(--brand-50); color: var(--brand-700); }
+.badge-warn    { background: #fff8e6; color: #b87900; }
+.badge-success { background: var(--green-100); color: #0a7e4a; }
+.badge-gray    { background: var(--gray-100); color: var(--gray-700); }
+.badge-dark    { background: #111; color: #fff; }
+.badge-line    { background: #fff; color: var(--text); border: 1px solid var(--line-strong); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 32px; padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+.chip.active {
+  background: var(--gray-900);
+  color: #fff;
+  border-color: var(--gray-900);
+}
+.chip.brand {
+  background: var(--brand-50);
+  color: var(--brand-700);
+  border-color: var(--brand-100);
+  font-weight: 600;
+}
+
+/* ─── Card ─── */
+.card {
+  background: #fff;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+}
+
+/* ─── Inputs ─── */
+.input {
+  height: 48px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+}
+.input:focus { border-color: var(--brand-500); }
+
+/* ─── Search bar ─── */
+.search-bar {
+  height: 44px;
+  background: var(--gray-50);
+  border-radius: var(--r-pill);
+  display: flex; align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-sub);
+}
+.search-bar.solid { background: #fff; border: 1px solid var(--line-strong); }
+
+/* ─── Tab bar (bottom nav) ─── */
+.tabbar {
+  background: #fff;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: 58px;
+  padding: 6px 4px 26px; /* top breathing + iPhone home indicator */
+  position: relative;
+  box-sizing: content-box;
+}
+.tabbar::after {
+  /* iPhone home indicator pill */
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 8px;
+  width: 134px; height: 4px;
+  border-radius: 2px;
+  background: #0f1320;
+  transform: translateX(-50%);
+}
+.tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px;
+  font-size: 11px;
+  letter-spacing: -0.3px;
+  color: var(--gray-500);
+  font-weight: 500;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.tab > span { line-height: 1; }
+.tab.active { color: var(--brand-500); font-weight: 700; }
+
+/* Center accent tab — 지금 (빈 슬롯 임박) */
+.tab-accent {
+  color: var(--brand-700);
+}
+.tab-accent.active { color: var(--brand-700); }
+.tab-accent-bubble {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-700) 100%);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 2px;
+  box-shadow: 0 4px 10px rgba(30,80,255,.30);
+}
+
+/* ─── Section ─── */
+.section { padding: 18px 16px; }
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text);
+  margin: 0;
+}
+.section-sub {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+/* utility */
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.gap-4 { gap: 4px; } .gap-6 { gap: 6px; } .gap-8 { gap: 8px; }
+.gap-10{ gap:10px; } .gap-12{ gap:12px; } .gap-16{ gap:16px; }
+.spacer { flex: 1; }
+.text-mute { color: var(--text-mute); }
+.text-sub  { color: var(--text-sub); }
+.text-brand{ color: var(--brand-500); }
+.text-hot  { color: var(--hot-500); }
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+
+/* number (price) tabular */
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+/* hairline divider */
+.hr { height: 1px; background: var(--line); }
+.hr-thick { height: 8px; background: var(--bg-soft); }
+
+/* skeleton/photo placeholder */
+.ph {
+  background:
+    linear-gradient(135deg, #1335a8 0%, #1e50ff 60%, #5c80ff 100%);
+  position: relative;
+  overflow: hidden;
+}
+.ph::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 80% at 80% 20%, rgba(255,255,255,.18), transparent 60%);
+}
+
+/* ───── Marker pulse for "now" ───── */
+@keyframes pulse-soft {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,.45); }
+  50%      { box-shadow: 0 0 0 8px rgba(255,59,48,0); }
+}
+.pulse { animation: pulse-soft 1.6s ease-in-out infinite; }

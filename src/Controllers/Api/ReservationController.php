@@ -1,0 +1,88 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controllers\Api;
+
+use App\Core\Auth;
+use App\Core\Controller;
+use App\Core\Request;
+use App\Core\Response;
+use App\Services\ReservationService;
+
+final class ReservationController extends Controller
+{
+    public function create(): void
+    {
+        $user = Auth::user();
+        if (!$user) Response::json(['error' => '로그인이 필요합니다'], 401);
+
+        $restriction = Auth::reservationRestriction($user);
+        if ($restriction) Response::json(['error' => $restriction], 403);
+
+        $input = Request::isJson() ? (Request::json() ?? []) : Request::all();
+
+        try {
+            $r = ReservationService::create((int) $user['id'], $input);
+            Response::json([
+                'ok'       => true,
+                'code'     => $r['code'],
+                'redirect' => '/reservations/' . $r['code'],
+            ]);
+        } catch (\Throwable $e) {
+            Response::json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function status(string $code): void
+    {
+        $user = Auth::user();
+        if (!$user) Response::json(['error' => '로그인이 필요합니다'], 401);
+
+        $r = ReservationService::findByCode($code, (int) $user['id']);
+        if (!$r) Response::json(['error' => 'not found'], 404);
+
+        Response::json([
+            'code'    => $r['code'],
+            'status'  => $r['status'],
+            'paid_at' => $r['paid_at'],
+        ]);
+    }
+
+    public function cancel(string $code): void
+    {
+        $user = Auth::user();
+        if (!$user) Response::json(['error' => '로그인이 필요합니다'], 401);
+
+        $r = ReservationService::findByCode($code, (int) $user['id']);
+        if (!$r) Response::json(['error' => 'not found'], 404);
+        if (!in_array($r['status'], ['pending', 'confirmed'], true)) {
+            Response::json(['error' => '취소할 수 없는 상태입니다.'], 400);
+        }
+
+        // 환불율 계산: 시작 시각 기준
+        $startTs = strtotime($r['reservation_date'] . ' ' . sprintf('%02d:00:00', (int) $r['start_hour']));
+        $diffH = ($startTs - time()) / 3600;
+        $pct = $diffH >= 24 ? (int) $r['refund_24h_pct']
+             : ($diffH >= 1 ? (int) $r['refund_1h_pct']
+                            : (int) $r['refund_lt1h_pct']);
+        $refund = (int) round((int) $r['total_price'] * $pct / 100);
+
+        \App\Core\Db::query(
+            'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "user",
+                                     cancel_reason = ?, refund_amount = ?, updated_at = NOW()
+             WHERE id = ?',
+            [(string) ($_POST['reason'] ?? '사용자 취소'), $refund, (int) $r['id']]
+        );
+
+        \App\Core\Db::insert('notifications', [
+            'user_id' => (int) $user['id'],
+            'type'    => 'system',
+            'title'   => '예약이 취소되었습니다',
+            'body'    => "예약번호 {$r['code']} · 환불 {$pct}% (" . number_format($refund) . "원)",
+            'related_type' => 'reservation',
+            'related_id'   => (int) $r['id'],
+        ]);
+
+        Response::json(['ok' => true, 'refund_amount' => $refund, 'refund_pct' => $pct]);
+    }
+}

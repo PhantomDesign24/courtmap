@@ -1,0 +1,168 @@
+/* 코트맵 — base styles. tokens.css 다음에 로드. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: var(--brand-500); text-decoration: none; }
+a:hover { opacity: 0.85; }
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity .15s, transform .05s;
+}
+.btn:hover { opacity: 0.92; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--brand-500); color: #fff; }
+.btn-line { background: #fff; color: var(--text); border-color: var(--line-strong); }
+.btn-kakao { background: #fee500; color: #191919; }
+.btn-block { display: flex; width: 100%; }
+
+/* ─── Hero (홈) ─── */
+.hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 100px 24px 80px;
+  text-align: center;
+}
+.hero h1 {
+  font-size: 56px;
+  margin: 0 0 16px;
+  letter-spacing: -1.5px;
+  color: var(--brand-500);
+  font-weight: 800;
+}
+.hero .lead {
+  font-size: 16px;
+  color: var(--text-sub);
+  line-height: 1.65;
+  margin: 0 0 36px;
+}
+.cta-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.footer-note {
+  margin-top: 64px;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+/* ─── Auth ─── */
+.auth {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 60px 24px 40px;
+}
+.auth h1 {
+  font-size: 28px;
+  margin: 0 0 6px;
+  letter-spacing: -0.6px;
+  font-weight: 800;
+}
+.auth-sub {
+  margin: 0 0 28px;
+  color: var(--text-sub);
+  font-size: 13px;
+}
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.auth-form input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s;
+}
+.auth-form input:focus { border-color: var(--brand-500); }
+.bank-block {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 14px 16px;
+  margin: 4px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bank-block legend {
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.auth-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+}
+.alert {
+  background: var(--hot-50);
+  color: var(--hot-700);
+  border: 1px solid var(--hot-100);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.info-card {
+  background: var(--gray-25);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-top: 16px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-row span { color: var(--text-sub); }
+.info-row b { font-weight: 700; color: var(--text); }

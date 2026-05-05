@@ -1,0 +1,25 @@
+/vendor/
+/data/
+/logs/
+.env
+.env.local
+*.log
+.DS_Store
+node_modules/
+/배드민턴.zip
+/screens/
+/styles/
+/tmp/
+/screenshots/
+/canvas.html
+/prototype.html
+/design-canvas.jsx
+
+# 빌드 산출물 (bundle 은 npm run build 로 재생성)
+/public/build/
+
+# 검증 스크립트 (개발용)
+/check_browser.mjs
+/check_visual.mjs
+/check_errs.mjs
+/verify_all.mjs
