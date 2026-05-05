@@ -6,11 +6,16 @@ $e = static fn(?string $s): string => View::e($s);
 $user = Auth::user();
 $path = $_SERVER['REQUEST_URI'] ?? '/';
 $pendingCount = (int) (Db::fetch('SELECT COUNT(*) AS c FROM venues WHERE status = "pending"')['c'] ?? 0);
+$failedHooks = (int) (Db::fetch('SELECT COUNT(*) AS c FROM webhooks WHERE status = "failed"')['c'] ?? 0);
 $nav = [
-    ['/admin',         '대시보드',     0],
-    ['/admin/venues',  '구장 승인',    $pendingCount],
-    ['/admin/users',   '사용자 관리',  0],
-    ['/admin/reports', '신고·이슈',    0],
+    ['/admin',           '대시보드',     0],
+    ['/admin/venues',    '구장 승인',    $pendingCount],
+    ['/admin/users',     '사용자 관리',  0],
+    ['/admin/finance',   '재무·환불',    0],
+    ['/admin/reports',   '신고·이슈',    0],
+    ['/admin/tags',      '시설 태그',    0],
+    ['/admin/broadcast', '공지 발송',    0],
+    ['/admin/logs',      '시스템 로그',  $failedHooks],
 ];
 ?>
 <!doctype html>

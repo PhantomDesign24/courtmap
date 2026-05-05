@@ -4,22 +4,38 @@ $e = static fn(?string $s): string => View::e($s);
 /** @var array $users */
 /** @var string $q */
 /** @var string $role */
+/** @var string $status */
+/** @var string $minScore */
+/** @var string $maxScore */
+/** @var int $page */
+/** @var int $totalPages */
+/** @var int $total */
 $role_label = ['user' => '일반', 'operator' => '운영자', 'admin' => '관리자'];
 ?>
 <header class="op-page-head">
   <h1>사용자 관리</h1>
-  <p class="op-sub">사용자 검색·신뢰점수 조정·정지·해제.</p>
+  <p class="op-sub">사용자 검색·신뢰점수 조정·정지·해제. 총 <?= (int)$total ?>명.</p>
 </header>
 
-<form method="get" class="op-filter-row" style="margin-bottom:16px">
-  <select name="role">
-    <option value="">전체</option>
+<form method="get" class="op-filter-row" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <select name="role" style="height:34px;padding:0 8px;border:1px solid var(--line-strong);border-radius:8px">
+    <option value="">전체 역할</option>
     <?php foreach ($role_label as $k => $v): ?>
       <option value="<?= $e($k) ?>" <?= $role === $k ? 'selected' : '' ?>><?= $e($v) ?></option>
     <?php endforeach; ?>
   </select>
-  <input type="search" name="q" value="<?= $e($q) ?>" placeholder="이름·이메일·전화">
-  <button type="submit" class="btn btn-line btn-sm">검색</button>
+  <select name="status" style="height:34px;padding:0 8px;border:1px solid var(--line-strong);border-radius:8px">
+    <option value="">전체 상태</option>
+    <option value="active" <?= $status==='active'?'selected':'' ?>>활성</option>
+    <option value="suspended" <?= $status==='suspended'?'selected':'' ?>>정지</option>
+  </select>
+  <input type="number" name="min_score" value="<?= $e($minScore) ?>" placeholder="최소점수" min="0" max="100" style="width:90px;height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:8px">
+  <input type="number" name="max_score" value="<?= $e($maxScore) ?>" placeholder="최대점수" min="0" max="100" style="width:90px;height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:8px">
+  <input type="search" name="q" value="<?= $e($q) ?>" placeholder="이름·이메일·전화" style="flex:1;min-width:160px;height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:8px">
+  <button type="submit" class="btn btn-primary btn-sm">검색</button>
+  <?php if ($q !== '' || $role !== '' || $status !== '' || $minScore !== '' || $maxScore !== ''): ?>
+    <a href="/admin/users" class="btn btn-line btn-sm">초기화</a>
+  <?php endif; ?>
 </form>
 
 <section class="op-card">
@@ -67,5 +83,20 @@ $role_label = ['user' => '일반', 'operator' => '운영자', 'admin' => '관리
         <?php endforeach; ?>
       </tbody>
     </table>
+  <?php endif; ?>
+  <?php if ($totalPages > 1):
+    $qs = $_GET; unset($qs['page']);
+    $base = '/admin/users?' . http_build_query($qs);
+    $sep = $base === '/admin/users?' ? '' : '&';
+  ?>
+    <div style="padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:6px;align-items:center;justify-content:center">
+      <?php if ($page > 1): ?>
+        <a href="<?= $e($base) ?><?= $sep ?>page=<?= $page-1 ?>" class="btn btn-line btn-sm">‹ 이전</a>
+      <?php endif; ?>
+      <span class="op-mute" style="padding:0 12px"><?= $page ?> / <?= $totalPages ?></span>
+      <?php if ($page < $totalPages): ?>
+        <a href="<?= $e($base) ?><?= $sep ?>page=<?= $page+1 ?>" class="btn btn-line btn-sm">다음 ›</a>
+      <?php endif; ?>
+    </div>
   <?php endif; ?>
 </section>

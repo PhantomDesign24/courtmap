@@ -30,6 +30,10 @@ use App\Controllers\Admin\DashboardController as AdDashboard;
 use App\Controllers\Admin\VenueController as AdVenue;
 use App\Controllers\Admin\UserController as AdUser;
 use App\Controllers\Admin\ReportController as AdReport;
+use App\Controllers\Admin\FinanceController as AdFinance;
+use App\Controllers\Admin\LogController as AdLog;
+use App\Controllers\Admin\TagController as AdTag;
+use App\Controllers\Admin\BroadcastController as AdBroadcast;
 use App\Controllers\NotificationController;
 use App\Controllers\Api\ReservationController as ApiReservation;
 use App\Controllers\Api\FavoriteController as ApiFavorite;
@@ -170,6 +174,16 @@ $router->post('/admin/users/{id}/suspend',               [AdUser::class,      's
 $router->post('/admin/users/{id}/score',                 [AdUser::class,      'adjustScore']);
 $router->post('/admin/users/{id}/role',                  [AdUser::class,      'changeRole']);
 $router->get ('/admin/reports',                          [AdReport::class,    'index']);
+$router->get ('/admin/finance',                          [AdFinance::class,   'index']);
+$router->get ('/admin/logs',                             [AdLog::class,       'index']);
+$router->post('/admin/logs/login/{key}/clear',           [AdLog::class,       'clearBlock']);
+$router->post('/admin/logs/webhooks/{id}/reactivate',    [AdLog::class,       'reactivateWebhook']);
+$router->get ('/admin/tags',                             [AdTag::class,       'index']);
+$router->post('/admin/tags',                             [AdTag::class,       'create']);
+$router->post('/admin/tags/{id}/update',                 [AdTag::class,       'update']);
+$router->post('/admin/tags/{id}/delete',                 [AdTag::class,       'delete']);
+$router->get ('/admin/broadcast',                        [AdBroadcast::class, 'index']);
+$router->post('/admin/broadcast',                        [AdBroadcast::class, 'send']);
 
 // ─── 운영자 — 신규 구장 신청 ─────────────────────────────
 $router->get ('/operator/venues/new',                    [OpVenue::class,     'newForm']);

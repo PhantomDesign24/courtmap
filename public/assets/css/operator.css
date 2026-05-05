@@ -65,6 +65,19 @@ body.op {
   overflow-x: auto;
   max-width: 100%;
 }
+.op-main > * { max-width: var(--container-admin); margin-left: auto; margin-right: auto; }
+@media (min-width: 1700px) {
+  .op-main { padding: 32px 60px; }
+}
+@media (max-width: 720px) {
+  .op-main { padding: 18px 14px; }
+  .op-shell { flex-direction: column; }
+  .op-side { width: 100%; flex-direction: row; align-items: center; padding: 10px 14px; gap: 8px; overflow-x: auto; }
+  .op-side nav { flex-direction: row; margin-top: 0; gap: 4px; flex: 1; overflow-x: auto; }
+  .op-side nav a { padding: 6px 10px; font-size: 12.5px; white-space: nowrap; }
+  .op-side-foot { margin-top: 0; padding-top: 0; border-top: none; }
+  .op-side .op-user, .op-side .op-brand span { display: none; }
+}
 .op-page-head h1 {
   font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
   margin: 0 0 4px;

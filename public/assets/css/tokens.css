@@ -60,6 +60,13 @@
 
   /* Type */
   --font-kr: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+
+  /* Container widths (반응형 일관성) */
+  --container-narrow: 480px;   /* 로그인·회원가입·환불계좌 같은 폼 */
+  --container-form:   720px;   /* 마이페이지·상세 폼 */
+  --container-app:    560px;   /* 사용자 모바일 화면 (홈·구장상세·예약) — 데스크톱 캡 */
+  --container-admin: 1280px;   /* 운영자·어드민 페이지 */
+  --container-wide:  1440px;   /* 대시보드 차트 */
 }
 
 /* Pretendard webfont */
@@ -77,17 +84,28 @@ html, body {
 button { font-family: inherit; cursor: pointer; }
 input, textarea, select { font-family: inherit; }
 
-/* ─── Mobile box ─── */
+/* ─── App shell — 모바일 우선, 데스크톱은 가운데 정렬 ─── */
+body { background: var(--bg-soft); }
 .mobile {
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  max-width: var(--container-app);
+  min-height: 100dvh;
+  margin: 0 auto;
   background: var(--bg);
   position: relative;
   overflow: hidden;
   font-size: 14px;
   color: var(--text);
   display: flex; flex-direction: column;
-  border-radius: 38px;
+  box-shadow: 0 0 0 1px var(--line);
+}
+@media (min-width: 720px) {
+  body { padding: 24px 0; background: var(--bg-soft); }
+  .mobile {
+    min-height: calc(100dvh - 48px);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 /* Status bar */
@@ -104,6 +122,9 @@ input, textarea, select { font-family: inherit; }
 .status-bar.dark { color: #fff; }
 .status-icons { display: flex; align-items: center; gap: 5px; }
 .status-icons svg { display: block; }
+@media (min-width: 720px) {
+  .status-bar { display: none; }   /* 데스크톱에선 가짜 iOS 시계·아이콘 숨김 */
+}
 
 /* App body — scroll region */
 .app-body {
@@ -225,7 +246,7 @@ input, textarea, select { font-family: inherit; }
   box-sizing: content-box;
 }
 .tabbar::after {
-  /* iPhone home indicator pill */
+  /* iPhone home indicator pill — 모바일에서만 */
   content: "";
   position: absolute;
   left: 50%; bottom: 8px;
@@ -233,6 +254,10 @@ input, textarea, select { font-family: inherit; }
   border-radius: 2px;
   background: #0f1320;
   transform: translateX(-50%);
+}
+@media (min-width: 720px) {
+  .tabbar { padding: 6px 4px 10px; }
+  .tabbar::after { display: none; }
 }
 .tab {
   flex: 1;
