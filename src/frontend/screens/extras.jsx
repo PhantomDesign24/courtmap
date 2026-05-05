@@ -6,13 +6,16 @@ import React from "react";
 // 1. 위치 변경 시트 (LocationSheet)
 // ─────────────────────────────────────────────
 function LocationSheet({ onClose, onPick, current = "강남구 역삼동" }) {
-  const recent = [
-    { name: "강남구 역삼동",  sub: "현재 위치",       gps: true },
-    { name: "강남구 대치동",  sub: "회사 근처",       fav: true },
-    { name: "서초구 서초동",  sub: "최근 검색" },
-    { name: "용산구 한남동",  sub: "최근 검색" },
-  ];
-  const popular = ["송파구 잠실동", "마포구 합정동", "성동구 성수동", "광진구 자양동", "종로구 종로1가"];
+  const [recent, setRecent]   = React.useState([{ name: current, sub: '현재 위치', gps: true }]);
+  const [popular, setPopular] = React.useState([]);
+  React.useEffect(() => {
+    fetch('/api/me/location', { credentials: 'same-origin' }).then(r => r.json()).then(d => {
+      const list = [{ name: d.area || current, sub: '현재 위치', gps: true }];
+      (d.recent || []).forEach(a => { if (a !== d.area) list.push({ name: a, sub: '최근 변경' }); });
+      setRecent(list);
+    }).catch(() => {});
+    fetch('/api/popular/areas').then(r => r.json()).then(d => setPopular(d.areas || [])).catch(() => {});
+  }, []);
 
   return (
     <div onClick={onClose} style={{
@@ -178,8 +181,18 @@ function SearchScreen({ onBack, onVenue }) {
   const [q, setQ] = React.useState("");
   const [matches, setMatches] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
-  const recent  = ["강남 스파이크", "역삼 BNK", "양재 그린코트", "도곡동 코트"];
-  const popular = ["스파이크", "그린코트", "셔틀콕", "삼성동", "잠실"];
+  const [recent, setRecent]   = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem('cm_recent_searches') || '[]'); } catch (e) { return []; }
+  });
+  const [popular, setPopular] = React.useState([]);
+  React.useEffect(() => {
+    fetch('/api/popular/searches').then(r => r.json()).then(d => setPopular(d.queries || [])).catch(() => {});
+  }, []);
+  function pushRecent(query) {
+    const next = [query, ...recent.filter(x => x !== query)].slice(0, 6);
+    setRecent(next);
+    try { localStorage.setItem('cm_recent_searches', JSON.stringify(next)); } catch (e) {}
+  }
 
   React.useEffect(() => {
     if (!q) { setMatches([]); return; }
@@ -189,9 +202,10 @@ function SearchScreen({ onBack, onVenue }) {
         const res = await fetch('/api/venues?q=' + encodeURIComponent(q), { credentials: 'same-origin' });
         const data = await res.json();
         setMatches(data.venues || []);
+        if ((data.venues || []).length > 0) pushRecent(q);
       } catch (e) { setMatches([]); }
       setLoading(false);
-    }, 200);
+    }, 400);
     return () => clearTimeout(t);
   }, [q]);
 
@@ -263,7 +277,7 @@ function SearchScreen({ onBack, onVenue }) {
           <div style={{ padding: "16px 16px 8px", display: "flex", alignItems: "center" }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>최근 검색</div>
             <div className="spacer"/>
-            <button type="button" style={{ background: "none", border: "none", fontSize: 12, color: "var(--text-sub)", padding: 4, fontFamily: "inherit", cursor: "pointer" }}>전체 삭제</button>
+            <button type="button" onClick={() => { setRecent([]); try { localStorage.removeItem('cm_recent_searches'); } catch(e) {} }} style={{ background: "none", border: "none", fontSize: 12, color: "var(--text-sub)", padding: 4, fontFamily: "inherit", cursor: "pointer" }}>전체 삭제</button>
           </div>
           <div style={{ padding: "0 16px 12px", display: "flex", flexWrap: "wrap", gap: 8 }}>
             {recent.map(r => (

@@ -105,6 +105,9 @@ $router->get ('/api/venues/{id}/calendar.ics',     [ApiCalendar::class,      've
 $router->get ('/api/venues',                       [ApiVenueList::class,     'index']);
 $router->get ('/api/me/location',                  [ApiMe::class,            'getLocation']);
 $router->post('/api/me/location',                  [ApiMe::class,            'setLocation']);
+$router->get ('/api/popular/areas',                [ApiMe::class,            'popularAreas']);
+$router->get ('/api/popular/searches',             [ApiMe::class,            'popularSearches']);
+$router->get ('/api/me/unread',                    [ApiMe::class,            'unreadCount']);
 $router->get ('/api/venues/{id}/equipment',        [ApiEquipment::class,     'venue']);
 $router->post('/api/lessons',                      [LessonController::class, 'create']);
 

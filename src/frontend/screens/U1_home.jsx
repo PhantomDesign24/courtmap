@@ -7,7 +7,7 @@ import React from "react";
 
 // ─────────────────────────────────────────────
 // 공통: 헤더 + 검색바
-function HomeHeader({ location = "강남구 역삼동", onNotif, onSearch, onLocation }) {
+function HomeHeader({ location = "강남구 역삼동", onNotif, onSearch, onLocation, hasUnread = false }) {
   return (
     <div style={{ padding: "8px 16px 12px", background: "#fff" }}>
       <div className="row gap-6" style={{ marginBottom: 14 }}>
@@ -18,7 +18,7 @@ function HomeHeader({ location = "강남구 역삼동", onNotif, onSearch, onLoc
         <div className="spacer" />
         <button type="button" style={{ background: "none", border: "none", padding: 6, position: "relative", cursor: "pointer" }} onClick={onNotif}>
           {I.bell(22, "var(--text)")}
-          <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, background: "var(--hot-500)", borderRadius: "50%", border: "1.5px solid #fff" }}></span>
+          {hasUnread && <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, background: "var(--hot-500)", borderRadius: "50%", border: "1.5px solid #fff" }}></span>}
         </button>
       </div>
       <button type="button" onClick={onSearch} className="search-bar" style={{ background: "var(--gray-50)", border: "none", width: "100%", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
@@ -255,13 +255,12 @@ function HomeListFirst({ dense = false, onVenue, ...headerProps }) {
 
 // C. Deal-first → "지금 가능 우선"
 function HomeDealFirst({ dense = false, onVenue, ...headerProps }) {
-  // hot 플래그가 있는 항목을 "임박 슬롯"으로 재해석
-  const nowAvail = [
-    { ...VENUES[0], startsIn: "30분 후" },                                  // 강남 스파이크 (할인 30%)
-    { ...VENUES[4], startsIn: "1시간 후" },                                 // 양재 그린코트 (할인 20%)
-    { ...VENUES[2], discount: undefined, startsIn: "오늘 21:00", nextSlot: "오늘 21:00" }, // 선릉
-  ];
-  const others = VENUES.filter(v => !v.hot).slice(0, dense ? 4 : 3);
+  // 임박 슬롯 = discount 가 있거나 hot 플래그가 있는 venue 들 (DB 동적)
+  const hot = VENUES.filter(v => v.discount || v.hot).slice(0, dense ? 4 : 3);
+  const nowAvail = (hot.length ? hot : VENUES.slice(0, 3))
+    .map(v => ({ ...v, startsIn: v.nextSlot || '곧' }));
+  const hotIds = new Set(nowAvail.map(v => v.id));
+  const others = VENUES.filter(v => !hotIds.has(v.id)).slice(0, dense ? 4 : 3);
   return (
     <>
       <HomeHeader {...headerProps} />

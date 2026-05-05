@@ -300,7 +300,14 @@ function SupportScreen({ page }) {
 function HomeWithFilters() {
   const [location, setLocation] = React.useState((window.__DATA__ && window.__DATA__.location) || '강남구 역삼동');
   const [showLoc, setShowLoc]   = React.useState(false);
+  const [hasUnread, setHasUnread] = React.useState(false);
   const [, force]               = React.useState(0);
+
+  React.useEffect(() => {
+    if (window.__USER__) {
+      fetch('/api/me/unread', { credentials: 'same-origin' }).then(r => r.json()).then(d => setHasUnread((d.count || 0) > 0)).catch(() => {});
+    }
+  }, []);
 
   // 시간 칩 변경 또는 위치 변경 → API 재조회 (VENUES splice)
   async function refresh(range, area) {
@@ -355,6 +362,7 @@ function HomeWithFilters() {
     }}>
       <HomeDealFirst
         location={location}
+        hasUnread={hasUnread}
         onVenue={(id) => nav('/venues/' + id)}
         onSearch={() => nav('/search')}
         onLocation={() => setShowLoc(true)}
