@@ -100,9 +100,7 @@ body { background: var(--bg-soft); }
   box-shadow: 0 0 0 1px var(--line);
 }
 @media (min-width: 720px) {
-  body { padding: 24px 0; background: var(--bg-soft); }
   .mobile {
-    min-height: calc(100dvh - 48px);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-md);
   }
