@@ -5,6 +5,19 @@ $old    = $old    ?? [];
 $e = static fn(?string $s): string => View::e($s);
 ?>
 <div class="auth-page">
+  <aside class="auth-hero">
+    <div class="auth-hero-top">
+      <div class="auth-hero-mark"><span class="m">코</span> 코트맵</div>
+      <h2>가까운 빈 코트<br>바로 예약</h2>
+      <p>실시간 빈 슬롯·동적 가격·다중 코트 일괄 예약. 신뢰점수 기반 안전한 운영.</p>
+    </div>
+    <ul class="auth-hero-features">
+      <li>실시간 빈 코트 & 핫딜 알림</li>
+      <li>1·2·3시간 슬롯 자동 매칭</li>
+      <li>무통장 입금 + 자동 환불 정책</li>
+    </ul>
+  </aside>
+  <div class="auth-card-side">
   <main class="auth">
     <div class="auth-brand">
       <div class="auth-brand-mark">코</div>
@@ -35,4 +48,5 @@ $e = static fn(?string $s): string => View::e($s);
     <p class="auth-link">계정이 없으신가요? <a href="/register">회원가입</a></p>
     <div class="auth-foot">© 코트맵 · 안전한 배드민턴 코트 예약</div>
   </main>
+  </div>
 </div>

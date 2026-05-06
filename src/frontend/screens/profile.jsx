@@ -6,6 +6,9 @@ function logoutSubmit() {
   const f = document.createElement('form');
   f.method = 'POST';
   f.action = '/logout';
+  const csrf = document.createElement('input');
+  csrf.type = 'hidden'; csrf.name = '_csrf'; csrf.value = window.__CSRF__ || '';
+  f.appendChild(csrf);
   document.body.appendChild(f);
   f.submit();
 }
