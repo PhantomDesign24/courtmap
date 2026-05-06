@@ -243,6 +243,23 @@ body:has(.auth-page) {
   box-shadow: 0 0 0 3px rgba(30, 80, 255, 0.12);
 }
 .auth-form input::placeholder { color: var(--text-mute); }
+.auth-form select, .auth-form textarea {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.auth-form textarea { height: auto; padding: 10px 14px; resize: vertical; }
+.auth-form select:focus, .auth-form textarea:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(30, 80, 255, 0.12);
+}
 .auth-form .btn-primary { height: 50px; font-size: 15px; margin-top: 6px; }
 .auth-form .btn-kakao { height: 50px; font-size: 15px; }
 .auth-form .btn-kakao:hover { opacity: 0.92; }

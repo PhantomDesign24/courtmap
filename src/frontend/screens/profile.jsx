@@ -30,6 +30,7 @@ function ProfileMain({ user, stats, onSection }) {
     { id: 'coupons',    l: '쿠폰함',         sub: stats.coupons_count > 0 ? `보유 ${stats.coupons_count}장` : '보유 쿠폰 없음' },
     { id: 'membership', l: '내 멤버십',      sub: stats.membership_remaining ? `잔여 ${stats.membership_remaining}시간` : '가입된 멤버십 없음' },
     { id: 'bank',       l: '환불계좌',       sub: user.refund_bank_name ? `${user.refund_bank_name} ${user.refund_bank_account_masked || ''}` : '미등록' },
+    { id: 'watches',    l: '빈자리 알림',    sub: '원하는 시간대 자리 나면 알림' },
     { id: 'notif',      l: '알림 설정',      sub: null },
     { id: 'support',    l: '고객센터',       sub: null },
     { id: 'logout',     l: '로그아웃',       sub: null },
@@ -200,6 +201,7 @@ function ProfileScreen() {
         else if (id === 'logout')  logoutSubmit();
         else if (id === 'support') window.location.href = '/support';
         else if (id === 'notif')   window.location.href = '/me/notify-settings';
+        else if (id === 'watches') window.location.href = '/me/watches';
         else if (id === 'bank')    window.location.href = '/me/refund-account';
         else alert(`${id} — 다음 단계에서 구현`);
       }}

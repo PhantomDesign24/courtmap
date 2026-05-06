@@ -67,17 +67,24 @@ final class ReservationController extends Controller
                             : (int) $r['refund_lt1h_pct']);
 
         $reason = (string) ($_POST['reason'] ?? '사용자 취소');
-        // bulk_group 이 있으면 같은 묶음 모두 일괄 취소
-        $totalRefund = \App\Core\Db::transaction(function () use ($r, $pct, $user, $reason) {
+        // bulk_group 이 있으면 같은 묶음 모두 일괄 취소 + 빈자리 알림 매칭
+        [$totalRefund, $freedSlots] = \App\Core\Db::transaction(function () use ($r, $pct, $user, $reason) {
             $rows = !empty($r['bulk_group'])
                 ? \App\Core\Db::fetchAll(
-                    'SELECT id, total_price FROM reservations
+                    'SELECT id, total_price, venue_id, court_id, reservation_date, start_hour, duration_hours
+                     FROM reservations
                      WHERE bulk_group = ? AND user_id = ? AND status IN ("pending","confirmed")',
                     [$r['bulk_group'], (int) $user['id']]
                 )
-                : [['id' => (int) $r['id'], 'total_price' => (int) $r['total_price']]];
+                : [[
+                    'id' => (int) $r['id'], 'total_price' => (int) $r['total_price'],
+                    'venue_id' => (int) $r['venue_id'], 'court_id' => (int) $r['court_id'],
+                    'reservation_date' => $r['reservation_date'],
+                    'start_hour' => (int) $r['start_hour'], 'duration_hours' => (int) $r['duration_hours'],
+                  ]];
 
             $sum = 0;
+            $freed = [];
             foreach ($rows as $row) {
                 $rf = (int) round((int) $row['total_price'] * $pct / 100);
                 \App\Core\Db::query(
@@ -87,9 +94,17 @@ final class ReservationController extends Controller
                     [$reason, $rf, (int) $row['id']]
                 );
                 $sum += $rf;
+                $freed[] = $row;
             }
-            return $sum;
+            return [$sum, $freed];
         });
+
+        foreach ($freedSlots as $s) {
+            \App\Services\SlotWatchService::onSlotFreed(
+                (int) $s['venue_id'], (int) $s['court_id'], (string) $s['reservation_date'],
+                (int) $s['start_hour'], (int) $s['duration_hours'], (int) $s['id']
+            );
+        }
 
         \App\Core\Db::insert('notifications', [
             'user_id' => (int) $user['id'],

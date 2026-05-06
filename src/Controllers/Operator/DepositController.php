@@ -124,7 +124,7 @@ final class DepositController extends Controller
         $user = $this->requireAuth('operator');
 
         $r = Db::fetch(
-            'SELECT r.id, r.status, v.owner_id
+            'SELECT r.id, r.status, r.venue_id, r.court_id, r.reservation_date, r.start_hour, r.duration_hours, v.owner_id
              FROM reservations r
              JOIN venues v ON v.id = r.venue_id
              WHERE r.code = ?',
@@ -138,6 +138,10 @@ final class DepositController extends Controller
             'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "operator",
                                      cancel_reason = ?, updated_at = NOW() WHERE id = ?',
             [(string) ($_POST['reason'] ?? '운영자 취소'), $r['id']]
+        );
+        \App\Services\SlotWatchService::onSlotFreed(
+            (int) $r['venue_id'], (int) $r['court_id'], (string) $r['reservation_date'],
+            (int) $r['start_hour'], (int) $r['duration_hours'], (int) $r['id']
         );
 
         $this->redirect('/operator/deposits');

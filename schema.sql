@@ -702,3 +702,41 @@ INSERT INTO facility_tags (code, name, sort_order) VALUES
   ('pro_court',       '프로 코트',    6),
   ('free_shuttle',    '셔틀콕무료',   7),
   ('water',           '정수기',       8);
+
+-- ─── 빈자리 알림 (slot watches) ─────────────────────────────
+CREATE TABLE IF NOT EXISTS slot_watches (
+  id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id         BIGINT UNSIGNED NOT NULL,
+  venue_id        BIGINT UNSIGNED NOT NULL,
+  court_id        BIGINT UNSIGNED DEFAULT NULL,                -- NULL = 전체 코트
+  type            ENUM('recurring','one_time') NOT NULL,
+  day_of_week     TINYINT UNSIGNED DEFAULT NULL,               -- recurring 용 (0=일)
+  target_date     DATE DEFAULT NULL,                           -- one_time 용
+  start_hour      TINYINT UNSIGNED NOT NULL,
+  end_hour        TINYINT UNSIGNED NOT NULL,
+  slot_unit_hours TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  note            VARCHAR(120) DEFAULT NULL,
+  status          ENUM('active','triggered','expired','canceled') NOT NULL DEFAULT 'active',
+  last_alerted_at DATETIME DEFAULT NULL,
+  expires_at      DATETIME DEFAULT NULL,                       -- recurring 만료 (선택)
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY (user_id, status),
+  KEY (venue_id, status),
+  KEY (target_date),
+  CONSTRAINT fk_sw_user  FOREIGN KEY (user_id)  REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_sw_venue FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE,
+  CONSTRAINT fk_sw_court FOREIGN KEY (court_id) REFERENCES courts(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS slot_watch_alerts (
+  id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  watch_id        BIGINT UNSIGNED NOT NULL,
+  reservation_id  BIGINT UNSIGNED DEFAULT NULL,
+  slot_date       DATE NOT NULL,
+  slot_start_hour TINYINT UNSIGNED NOT NULL,
+  slot_court_id   BIGINT UNSIGNED NOT NULL,
+  sent_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY (watch_id, sent_at),
+  UNIQUE KEY uniq_watch_slot (watch_id, slot_date, slot_start_hour, slot_court_id),
+  CONSTRAINT fk_swa_watch FOREIGN KEY (watch_id) REFERENCES slot_watches(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

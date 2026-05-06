@@ -112,8 +112,18 @@ final class BookingController extends Controller
         if (!in_array($r['status'], ['pending','confirmed'], true)) $this->redirect('/operator/bookings');
 
         $reason = (string) ($_POST['reason'] ?? '운영자 취소');
-        Db::transaction(function () use ($r, $reason) {
-            // bulk_group 이 있으면 모든 형제도 함께 취소
+        $freed = Db::transaction(function () use ($r, $reason) {
+            $rows = !empty($r['bulk_group'])
+                ? Db::fetchAll(
+                    'SELECT id, venue_id, court_id, reservation_date, start_hour, duration_hours
+                     FROM reservations WHERE bulk_group = ? AND status IN ("pending","confirmed")',
+                    [$r['bulk_group']]
+                )
+                : [[
+                    'id' => (int) $r['id'], 'venue_id' => (int) $r['venue_id'], 'court_id' => (int) $r['court_id'],
+                    'reservation_date' => $r['reservation_date'],
+                    'start_hour' => (int) $r['start_hour'], 'duration_hours' => (int) $r['duration_hours'],
+                  ]];
             if (!empty($r['bulk_group'])) {
                 Db::query(
                     'UPDATE reservations SET status = "canceled", canceled_at = NOW(), canceled_by = "operator",
@@ -128,7 +138,14 @@ final class BookingController extends Controller
                     [$reason, $r['id']]
                 );
             }
+            return $rows;
         });
+        foreach ($freed as $s) {
+            \App\Services\SlotWatchService::onSlotFreed(
+                (int) $s['venue_id'], (int) $s['court_id'], (string) $s['reservation_date'],
+                (int) $s['start_hour'], (int) $s['duration_hours'], (int) $s['id']
+            );
+        }
         Db::insert('notifications', [
             'user_id' => (int) $r['user_id'],
             'type'    => 'system',

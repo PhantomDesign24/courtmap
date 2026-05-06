@@ -123,6 +123,11 @@ $router->post('/me/refund-account',  [\App\Controllers\MeBankController::class, 
 // 알림 설정
 $router->get ('/me/notify-settings', [\App\Controllers\MeNotifySettingsController::class, 'form']);
 $router->post('/me/notify-settings', [\App\Controllers\MeNotifySettingsController::class, 'update']);
+
+// 빈자리 알림 (slot watches)
+$router->get ('/me/watches',                [\App\Controllers\MeWatchController::class, 'index']);
+$router->post('/me/watches',                [\App\Controllers\MeWatchController::class, 'create']);
+$router->post('/me/watches/{id}/delete',    [\App\Controllers\MeWatchController::class, 'delete']);
 $router->get ('/api/popular/areas',                [ApiMe::class,            'popularAreas']);
 $router->get ('/api/popular/searches',             [ApiMe::class,            'popularSearches']);
 $router->get ('/api/me/unread',                    [ApiMe::class,            'unreadCount']);
