@@ -40,6 +40,11 @@ CREATE TABLE users (
   refund_bank_account VARCHAR(40) NOT NULL,
   refund_bank_holder  VARCHAR(60) NOT NULL,
 
+  -- 알림 옵트인 (기본: 리마인더/공지 ON, 마케팅 OFF)
+  notify_reminder     TINYINT(1)  NOT NULL DEFAULT 1,
+  notify_broadcast    TINYINT(1)  NOT NULL DEFAULT 1,
+  notify_marketing    TINYINT(1)  NOT NULL DEFAULT 0,
+
   -- 신뢰점수 (노쇼 차감, 기본 100)
   trust_score     SMALLINT        NOT NULL DEFAULT 100,
   -- 점수 하한 시 예약 제한 해제 시점

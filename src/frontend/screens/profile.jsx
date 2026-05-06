@@ -199,7 +199,7 @@ function ProfileScreen() {
         if (id === 'favorites' || id === 'coupons' || id === 'membership') setView(id);
         else if (id === 'logout')  logoutSubmit();
         else if (id === 'support') window.location.href = '/support';
-        else if (id === 'notif')   window.location.href = '/notifications';
+        else if (id === 'notif')   window.location.href = '/me/notify-settings';
         else if (id === 'bank')    window.location.href = '/me/refund-account';
         else alert(`${id} — 다음 단계에서 구현`);
       }}

@@ -119,6 +119,10 @@ $router->post('/api/me/location',                  [ApiMe::class,            'se
 // 환불계좌 관리 (사용자)
 $router->get ('/me/refund-account',  [\App\Controllers\MeBankController::class, 'form']);
 $router->post('/me/refund-account',  [\App\Controllers\MeBankController::class, 'update']);
+
+// 알림 설정
+$router->get ('/me/notify-settings', [\App\Controllers\MeNotifySettingsController::class, 'form']);
+$router->post('/me/notify-settings', [\App\Controllers\MeNotifySettingsController::class, 'update']);
 $router->get ('/api/popular/areas',                [ApiMe::class,            'popularAreas']);
 $router->get ('/api/popular/searches',             [ApiMe::class,            'popularSearches']);
 $router->get ('/api/me/unread',                    [ApiMe::class,            'unreadCount']);
